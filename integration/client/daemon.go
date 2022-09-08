@@ -24,6 +24,7 @@ import (
 	"runtime"
 	"sync"
 	"syscall"
+	"time"
 
 	. "github.com/containerd/containerd"
 	exec "golang.org/x/sys/execabs"
@@ -61,7 +62,20 @@ func (d *daemon) waitForStart(ctx context.Context) (*Client, error) {
 		err     error
 	)
 
-	client, err = New(d.addr)
+	beginWait := time.Now()
+
+	waitFor := 1 * time.Minute
+
+	for time.Since(beginWait) < waitFor {
+		fmt.Printf("Trying to create new containerd client\n")
+		client, err = New(d.addr)
+		if err == nil {
+			time.Sleep(5 * time.Second)
+			break
+		}
+		time.Sleep(10 * time.Second)
+	}
+
 	if err != nil {
 		return nil, err
 	}

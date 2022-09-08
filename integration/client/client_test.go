@@ -84,6 +84,7 @@ func TestMain(m *testing.M) {
 		ctrdStdioFilePath = stdioFile.Name()
 		stdioWriter := io.MultiWriter(stdioFile, buf)
 
+		fmt.Printf("*** START CONTAINERD ***\n")
 		err = ctrd.start("containerd", address, []string{
 			"--root", defaultRoot,
 			"--state", defaultState,
@@ -100,13 +101,13 @@ func TestMain(m *testing.M) {
 		ctrd.addr = address
 	}
 
-	waitCtx, waitCancel := context.WithTimeout(ctx, 4*time.Second)
+	waitCtx, waitCancel := context.WithTimeout(ctx, 40*time.Second)
 	client, err := ctrd.waitForStart(waitCtx)
 	waitCancel()
 	if err != nil {
 		ctrd.Kill()
 		ctrd.Wait()
-		fmt.Fprintf(os.Stderr, "%s: %s\n", err, buf.String())
+		fmt.Fprintf(os.Stderr, "Error waiting for containerd to start: %s: %s\n", err, buf.String())
 		os.Exit(1)
 	}
 
