@@ -59,7 +59,7 @@ func TestVerifyImage(t *testing.T) {
 	}
 	defer conn.Close()
 
-	tc := NewClient(conn)
+	tc := ttrpc.NewClient(conn)
 	client := NewImageVerifierClient(tc)
 
 	r := &VerifyImageRequest{
