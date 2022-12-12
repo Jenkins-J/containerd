@@ -10,7 +10,7 @@ import (
 	"github.com/containerd/ttrpc"
 )
 
-const socket = "/run/imageverifier/v1.sock"
+const socket = "/tmp/imageverifier.sock"
 
 type notaryVerifier struct{}
 
