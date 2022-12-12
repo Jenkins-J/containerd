@@ -48,10 +48,6 @@ func TestMain(m *testing.M) {
 
 }
 
-func TestHello(t *testing.T) {
-	fmt.Printf("Hello there!")
-}
-
 func TestVerifyImage(t *testing.T) {
 	conn, err := net.Dial("unix", socket)
 	if err != nil {
