@@ -33,11 +33,7 @@ func TestMain(m *testing.M) {
 		fmt.Printf("Error listening on socket: %s\n", err.Error())
 	}
 	defer func() {
-		//fmt.Printf("closing socket listener\n")
-		//l.Close()
-		fmt.Printf("closing server\n")
 		server.Close()
-		fmt.Printf("Removing socket\n")
 		os.Remove(socket)
 	}()
 
