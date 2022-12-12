@@ -51,3 +51,30 @@ func TestMain(m *testing.M) {
 func TestHello(t *testing.T) {
 	fmt.Printf("Hello there!")
 }
+
+func TestVerifyImage(t *testing.T) {
+	conn, err := net.Dial("unix", socket)
+	if err != nil {
+		t.Errorf("Error: %s\n", err.Error())
+	}
+	defer conn.Close()
+
+	tc := NewClient(conn)
+	client := NewImageVerifierClient(tc)
+
+	r := &VerifyImageRequest{
+		ImageName:   "image name here",
+		ImageDigest: "image digest here",
+	}
+
+	ctx := context.Background()
+
+	resp, err := client.VerifyImage(ctx, r)
+	if err != nil {
+		t.Errorf("Error: %s\n", err.Error())
+	}
+
+	fmt.Printf("Response Ok: %v\n", resp.Ok)
+	fmt.Printf("Response Reason: %v\n", resp.Reason)
+
+}
