@@ -2,6 +2,7 @@ package imageverifier
 
 import (
 	"context"
+	"crypto/x509"
 	"fmt"
 	"math"
 	"net"
@@ -11,6 +12,7 @@ import (
 	"github.com/containerd/ttrpc"
 	"github.com/notaryproject/notation-go"
 	"github.com/notaryproject/notation-go/verifier"
+	"github.com/notaryproject/notation-go/verifier/truststore"
 
 	// "oras.land/oras-go/v2/registry"
 	notationregistry "github.com/notaryproject/notation-go/registry"
@@ -20,6 +22,14 @@ import (
 const socket = "/tmp/imageverifier.sock"
 
 type notaryVerifier struct{}
+type trustStore struct{}
+
+var _ = truststore.X509TrustStore(trustStore{})
+
+func (t trustStore) GetCertificates(ctx context.Context, storeType truststore.Type, namedStore string) ([]*x509.Certificate, error) {
+	certs := make([]*x509.Certificate, 0)
+	return certs, nil
+}
 
 func (v notaryVerifier) VerifyImage(cxt context.Context, req *VerifyImageRequest) (*VerifyImageResponse, error) {
 	// ORAS parse reference -> ref
