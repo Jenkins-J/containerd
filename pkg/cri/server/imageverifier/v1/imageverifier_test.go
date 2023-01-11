@@ -8,6 +8,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/containerd/ttrpc"
@@ -76,23 +77,38 @@ func (v notaryVerifier) VerifyImage(cxt context.Context, req *VerifyImageRequest
 	remoteRepo := remote.NewRepository(reference)
 	repo := notationregistry.NewRepository(remoteRepo)
 
-	// use repo to run notation Verify func
-
-	// TODO: get trust policy and trust store to create verifier
-	// 1. [X] create struct to implement store interface (notation X509TrustStore)
-	// 2. [X] create/read trust policy document (notation trustpolicy Document)
+	// create trust store and retrieve policy
 	store := &trustStore{}
 	policy, err := loadTrustPolicy()
 	if err != nil {
 		return &VerifyImageResponse{Ok: false, Reason: err.Error()}, fmt.Errorf("Failed to load trust policy: %s\n", err.Error())
 	}
 
+	// create a verifier
 	verifier, err := verifier.New(policy, store, nil)
 	verifyOpts := notation.RemoteVerifyOptions{
 		MaxSignatureAttempts: math.MaxInt64,
 	}
+
+	// run Verify func
 	_, outcomes, err := notation.Verify(cxt, verifier, repo, verifyOpts)
-	return &VerifyImageResponse{Ok: false, Reason: "This will always fail"}, nil
+
+	// return the results
+	var ok bool = true
+	reasons := make([]string, 0)
+	for _, outcome := range outcomes {
+		if outcome.Error != nil {
+			ok = false
+			reasons = append(reasons, outcome.Error.Error())
+		}
+	}
+
+	if !ok {
+		r := strings.Join(reasons, "; ")
+		return &VerifyImageResponse{Ok: ok, Reason: r}, nil
+	}
+
+	return &VerifyImageResponse{Ok: ok, Reason: "Passed all verifications"}, nil
 }
 
 func TestMain(m *testing.M) {
