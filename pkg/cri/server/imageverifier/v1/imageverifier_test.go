@@ -3,6 +3,7 @@ package imageverifier
 import (
 	"context"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"math"
 	"net"
@@ -12,6 +13,7 @@ import (
 	"github.com/containerd/ttrpc"
 	"github.com/notaryproject/notation-go"
 	"github.com/notaryproject/notation-go/verifier"
+	"github.com/notaryproject/notation-go/verifier/trustpolicy"
 	"github.com/notaryproject/notation-go/verifier/truststore"
 
 	// "oras.land/oras-go/v2/registry"
@@ -28,7 +30,41 @@ var _ = truststore.X509TrustStore(trustStore{})
 
 func (t trustStore) GetCertificates(ctx context.Context, storeType truststore.Type, namedStore string) ([]*x509.Certificate, error) {
 	certs := make([]*x509.Certificate, 0)
+	// TODO: retrieve certs from disk/storage
 	return certs, nil
+}
+
+// TODO: load policy from file
+func loadTrustPolicy() (*trustpolicy.Document, error) {
+	defaultPolicy := `
+{
+	"version": "1.0",
+	"trustPolicies": [
+			{
+					"name": "default",
+					"registryScopes": [
+							"*"
+					],
+					"signatureVerification": {
+							"level": "strict"
+					},
+					"trustStores": [
+							"ca:certs"
+					],
+					"trustedIdentities": [
+							"*"
+					]
+			}
+	]
+}
+`
+
+	policy := &trustpolicy.Document{}
+	err := json.Unmarshal([]byte(defaultPolicy), policy)
+	if err != nil {
+		return policy, fmt.Errorf("Could not decode trust policy: %s\n", err.Error())
+	}
+	return policy, nil
 }
 
 func (v notaryVerifier) VerifyImage(cxt context.Context, req *VerifyImageRequest) (*VerifyImageResponse, error) {
@@ -43,8 +79,14 @@ func (v notaryVerifier) VerifyImage(cxt context.Context, req *VerifyImageRequest
 	// use repo to run notation Verify func
 
 	// TODO: get trust policy and trust store to create verifier
-	// 1. create struct to implement store interface (notation X509TrustStore)
-	// 2. create/read trust policy document (notation trustpolicy Document)
+	// 1. [X] create struct to implement store interface (notation X509TrustStore)
+	// 2. [X] create/read trust policy document (notation trustpolicy Document)
+	store := &trustStore{}
+	policy, err := loadTrustPolicy()
+	if err != nil {
+		return &VerifyImageResponse{Ok: false, Reason: err.Error()}, fmt.Errorf("Failed to load trust policy: %s\n", err.Error())
+	}
+
 	verifier, err := verifier.New(policy, store, nil)
 	verifyOpts := notation.RemoteVerifyOptions{
 		MaxSignatureAttempts: math.MaxInt64,
