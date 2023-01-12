@@ -77,23 +77,19 @@ func (v notaryVerifier) VerifyImage(cxt context.Context, req *VerifyImageRequest
 	remoteRepo := remote.NewRepository(reference)
 	repo := notationregistry.NewRepository(remoteRepo)
 
-	// create trust store and retrieve policy
 	store := &trustStore{}
 	policy, err := loadTrustPolicy()
 	if err != nil {
 		return &VerifyImageResponse{Ok: false, Reason: err.Error()}, fmt.Errorf("Failed to load trust policy: %s\n", err.Error())
 	}
 
-	// create a verifier
 	verifier, err := verifier.New(policy, store, nil)
+
 	verifyOpts := notation.RemoteVerifyOptions{
 		MaxSignatureAttempts: math.MaxInt64,
 	}
-
-	// run Verify func
 	_, outcomes, err := notation.Verify(cxt, verifier, repo, verifyOpts)
 
-	// return the results
 	var ok bool = true
 	reasons := make([]string, 0)
 	for _, outcome := range outcomes {
