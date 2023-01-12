@@ -30,6 +30,7 @@ import (
 	cgroupsv2 "github.com/containerd/cgroups/v3/cgroup2"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/integration/images"
+	criopts "github.com/containerd/containerd/pkg/cri/opts"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -232,7 +233,10 @@ func TestUpdateContainerResources_MemoryLimit(t *testing.T) {
 	EnsureImageExists(t, pauseImage)
 
 	expectedSwapLimit := func(memoryLimit int64) *int64 {
-		return &memoryLimit
+		if criopts.SwapControllerAvailable() {
+			return &memoryLimit
+		}
+		return nil
 	}
 
 	t.Log("Create a container with memory limit")
@@ -271,11 +275,19 @@ func TestUpdateContainerResources_MemoryLimit(t *testing.T) {
 	task, err := container.Task(context.Background(), nil)
 	require.NoError(t, err)
 
+	var (
+		zero     int64
+		expected *int64
+	)
 	t.Log("Check memory limit in cgroup")
 	memLimit := getCgroupMemoryLimitForTask(t, task)
 	assert.Equal(t, uint64(400*1024*1024), memLimit)
 	swapLimit := getCgroupSwapLimitForTask(t, task)
-	assert.Equal(t, uint64(400*1024*1024), swapLimit)
+	expected = expectedSwapLimit(400 * 1024 * 1024)
+	if expected == nil {
+		expected = &zero
+	}
+	assert.Equal(t, uint64(*expected), swapLimit)
 
 	t.Log("Update container memory limit after started")
 	err = runtimeService.UpdateContainerResources(cn, &runtime.LinuxContainerResources{
@@ -293,7 +305,11 @@ func TestUpdateContainerResources_MemoryLimit(t *testing.T) {
 	memLimit = getCgroupMemoryLimitForTask(t, task)
 	assert.Equal(t, uint64(800*1024*1024), memLimit)
 	swapLimit = getCgroupSwapLimitForTask(t, task)
-	assert.Equal(t, uint64(800*1024*1024), swapLimit)
+	expected = expectedSwapLimit(800 * 1024 * 1024)
+	if expected == nil {
+		expected = &zero
+	}
+	assert.Equal(t, uint64(*expected), swapLimit)
 
 }
 
