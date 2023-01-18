@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/containerd/ttrpc"
+	notationX509 "github.com/notaryproject/notation-core-go/x509"
 	"github.com/notaryproject/notation-go"
 	"github.com/notaryproject/notation-go/verifier"
 	"github.com/notaryproject/notation-go/verifier/trustpolicy"
@@ -31,7 +32,15 @@ var _ = truststore.X509TrustStore(trustStore{})
 
 func (t trustStore) GetCertificates(ctx context.Context, storeType truststore.Type, namedStore string) ([]*x509.Certificate, error) {
 	certs := make([]*x509.Certificate, 0)
+
 	// TODO: retrieve certs from disk/storage
+	cert, err := notationX509.ReadCertificateFile("/home/ubuntu/cert")
+	if err != nil {
+		return certs, err
+	}
+	if cert != nil {
+		certs = append(certs, cert)
+	}
 	return certs, nil
 }
 
