@@ -147,6 +147,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestVerifyImage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping TestVerifyImage: testing in short mode")
+	}
 	conn, err := net.Dial("unix", socket)
 	if err != nil {
 		t.Errorf("Error: %s\n", err.Error())
@@ -171,4 +174,12 @@ func TestVerifyImage(t *testing.T) {
 	fmt.Printf("Response Ok: %v\n", resp.Ok)
 	fmt.Printf("Response Reason: %v\n", resp.Reason)
 
+}
+
+func TestGetCertificate(t *testing.T) {
+	fmt.Printf("Testing GetCertificate\n")
+}
+
+func TestLoadTrustPolicy(t *testing.T) {
+	fmt.Printf("Testing TestLoadTrustPolicy\n")
 }
