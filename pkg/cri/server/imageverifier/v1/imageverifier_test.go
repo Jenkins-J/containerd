@@ -39,7 +39,7 @@ func (t trustStore) GetCertificates(ctx context.Context, storeType truststore.Ty
 		return certs, err
 	}
 	if cert != nil {
-		certs = append(certs, cert)
+		certs = append(certs, cert...)
 	}
 	return certs, nil
 }
@@ -83,7 +83,10 @@ func (v notaryVerifier) VerifyImage(cxt context.Context, req *VerifyImageRequest
 	// ref, err := registry.ParseReference(reference)
 
 	// create repository with ref -> repo
-	remoteRepo := remote.NewRepository(reference)
+	remoteRepo, err := remote.NewRepository(reference)
+	if err != nil {
+		return &VerifyImageResponse{Ok: false, Reason: err.Error()}, fmt.Errorf("Failed to create repository client: %s\n", err.Error())
+	}
 	repo := notationregistry.NewRepository(remoteRepo)
 
 	store := &trustStore{}
