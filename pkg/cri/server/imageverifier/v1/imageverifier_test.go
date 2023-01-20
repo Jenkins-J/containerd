@@ -100,6 +100,7 @@ func (v notaryVerifier) VerifyImage(cxt context.Context, req *VerifyImageRequest
 
 	verifyOpts := notation.RemoteVerifyOptions{
 		MaxSignatureAttempts: math.MaxInt64,
+		ArtifactReference:    reference,
 	}
 	_, outcomes, err := notation.Verify(cxt, verifier, repo, verifyOpts)
 
