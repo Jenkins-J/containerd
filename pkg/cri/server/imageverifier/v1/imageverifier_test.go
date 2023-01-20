@@ -121,8 +121,6 @@ func (v notaryVerifier) VerifyImage(cxt context.Context, req *VerifyImageRequest
 }
 
 func TestMain(m *testing.M) {
-	fmt.Printf("Hello from TestMain\n")
-
 	server, err := ttrpc.NewServer()
 	if err != nil {
 		fmt.Printf("Error creating ttrpc server: %s\n", err.Error())
