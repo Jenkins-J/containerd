@@ -17,6 +17,7 @@ import (
 	"github.com/notaryproject/notation-go/verifier"
 	"github.com/notaryproject/notation-go/verifier/trustpolicy"
 	"github.com/notaryproject/notation-go/verifier/truststore"
+	"github.com/stretchr/testify/assert"
 
 	// "oras.land/oras-go/v2/registry"
 	notationregistry "github.com/notaryproject/notation-go/registry"
@@ -181,8 +182,22 @@ func TestVerifyImage(t *testing.T) {
 
 func TestGetCertificate(t *testing.T) {
 	fmt.Printf("Testing GetCertificate\n")
+
+	ts := &trustStore{}
+	ctx := context.Background()
+
+	c, err := ts.GetCertificates(ctx, truststore.TypeCA, "")
+	if err != nil {
+		t.Errorf("Error retrieving certificates: %s\n", err.Error())
+	}
+	assert.NotEmpty(t, c)
 }
 
 func TestLoadTrustPolicy(t *testing.T) {
 	fmt.Printf("Testing TestLoadTrustPolicy\n")
+	p, err := loadTrustPolicy()
+	if err != nil {
+		t.Errorf("Error retrieving trust policy: %s\n", err.Error())
+	}
+	assert.NotEmpty(t, p)
 }
