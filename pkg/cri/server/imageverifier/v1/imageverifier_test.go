@@ -60,7 +60,7 @@ func loadTrustPolicy() (*trustpolicy.Document, error) {
 							"level": "strict"
 					},
 					"trustStores": [
-							"ca:certs"
+							"ca:wabbit-networks.io"
 					],
 					"trustedIdentities": [
 							"*"
@@ -81,13 +81,15 @@ func loadTrustPolicy() (*trustpolicy.Document, error) {
 func (v notaryVerifier) VerifyImage(cxt context.Context, req *VerifyImageRequest) (*VerifyImageResponse, error) {
 	// ORAS parse reference -> ref
 	reference := fmt.Sprintf("%s@%s", req.ImageName, req.ImageDigest)
-	// ref, err := registry.ParseReference(reference)
+	fmt.Printf("Image to verify: %v\n", reference)
 
 	// create repository with ref -> repo
 	remoteRepo, err := remote.NewRepository(reference)
 	if err != nil {
 		return &VerifyImageResponse{Ok: false, Reason: err.Error()}, fmt.Errorf("Failed to create repository client: %s\n", err.Error())
 	}
+	remoteRepo.PlainHTTP = true
+	fmt.Printf("oras remote repo: %+v\n", remoteRepo)
 	repo := notationregistry.NewRepository(remoteRepo)
 
 	store := &trustStore{}
@@ -102,7 +104,23 @@ func (v notaryVerifier) VerifyImage(cxt context.Context, req *VerifyImageRequest
 		MaxSignatureAttempts: math.MaxInt64,
 		ArtifactReference:    reference,
 	}
-	_, outcomes, err := notation.Verify(cxt, verifier, repo, verifyOpts)
+
+	// test artifact descriptor
+	artifactDes, err := repo.Resolve(cxt, verifyOpts.ArtifactReference)
+	if err != nil {
+		fmt.Printf("error resolving descriptor: %s\n", err.Error())
+	}
+	fmt.Printf("Des %+v\n", artifactDes)
+
+	d, outcomes, err := notation.Verify(cxt, verifier, repo, verifyOpts)
+	fmt.Printf("Descriptor: %+v\n", d)
+	if err != nil {
+		fmt.Printf("Error verifying image: %v\n", err.Error())
+	}
+	if outcomes == nil {
+		fmt.Printf("outcomes is nil\n")
+	}
+	fmt.Printf("outcomes: %+v\n", outcomes)
 
 	var ok bool = true
 	reasons := make([]string, 0)
