@@ -14,6 +14,7 @@ import (
 	"github.com/containerd/ttrpc"
 	notationX509 "github.com/notaryproject/notation-core-go/x509"
 	"github.com/notaryproject/notation-go"
+	"github.com/notaryproject/notation-go/log"
 	"github.com/notaryproject/notation-go/verifier"
 	"github.com/notaryproject/notation-go/verifier/trustpolicy"
 	"github.com/notaryproject/notation-go/verifier/truststore"
@@ -25,6 +26,62 @@ import (
 )
 
 const socket = "/tmp/imageverifier.sock"
+
+// test logger
+
+type testLogger struct{}
+
+func (tl testLogger) Debug(args ...interface{}) {
+	fmt.Print("DEBUG: ", fmt.Sprint(args...))
+}
+
+func (tl testLogger) Debugf(format string, args ...interface{}) {
+	format = fmt.Sprintf("%s %s", "DEBUG:", format)
+	fmt.Printf(format, args...)
+}
+
+func (tl testLogger) Debugln(args ...interface{}) {
+	fmt.Println("DEBUG:", fmt.Sprint(args...))
+}
+
+func (tl testLogger) Info(args ...interface{}) {
+	fmt.Print("INFO: ", fmt.Sprint(args...))
+}
+
+func (tl testLogger) Infof(format string, args ...interface{}) {
+	format = fmt.Sprintf("%s %s", "INFO:", format)
+	fmt.Printf(format, args...)
+}
+
+func (tl testLogger) Infoln(args ...interface{}) {
+	fmt.Println("INFO:", fmt.Sprint(args...))
+}
+
+func (tl testLogger) Warn(args ...interface{}) {
+	fmt.Print("WARN: ", fmt.Sprint(args...))
+}
+
+func (tl testLogger) Warnf(format string, args ...interface{}) {
+	format = fmt.Sprintf("%s %s", "WARN:", format)
+	fmt.Printf(format, args...)
+}
+
+func (tl testLogger) Warnln(args ...interface{}) {
+	fmt.Println("WARN:", fmt.Sprint(args...))
+}
+
+func (tl testLogger) Error(args ...interface{}) {
+	fmt.Print("ERROR: ", fmt.Sprint(args...))
+}
+
+func (tl testLogger) Errorf(format string, args ...interface{}) {
+	format = fmt.Sprintf("%s %s", "ERROR:", format)
+	fmt.Printf(format, args...)
+}
+
+func (tl testLogger) Errorln(args ...interface{}) {
+	fmt.Println("ERROR:", fmt.Sprint(args...))
+}
 
 type notaryVerifier struct{}
 type trustStore struct{}
@@ -186,6 +243,8 @@ func TestVerifyImage(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	tl := testLogger{}
+	ctx = log.WithLogger(ctx, tl)
 
 	resp, err := client.VerifyImage(ctx, r)
 	if err != nil {
