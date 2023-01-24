@@ -135,7 +135,7 @@ func loadTrustPolicy() (*trustpolicy.Document, error) {
 	return policy, nil
 }
 
-func (v notaryVerifier) VerifyImage(cxt context.Context, req *VerifyImageRequest) (*VerifyImageResponse, error) {
+func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest) (*VerifyImageResponse, error) {
 	// ORAS parse reference -> ref
 	reference := fmt.Sprintf("%s@%s", req.ImageName, req.ImageDigest)
 	fmt.Printf("Image to verify: %v\n", reference)
@@ -162,14 +162,18 @@ func (v notaryVerifier) VerifyImage(cxt context.Context, req *VerifyImageRequest
 		ArtifactReference:    reference,
 	}
 
+	// set logger to get notary logs
+	tl := testLogger{}
+	ctx = log.WithLogger(ctx, tl)
+
 	// test artifact descriptor
-	artifactDes, err := repo.Resolve(cxt, verifyOpts.ArtifactReference)
+	artifactDes, err := repo.Resolve(ctx, verifyOpts.ArtifactReference)
 	if err != nil {
 		fmt.Printf("error resolving descriptor: %s\n", err.Error())
 	}
 	fmt.Printf("Des %+v\n", artifactDes)
 
-	d, outcomes, err := notation.Verify(cxt, verifier, repo, verifyOpts)
+	d, outcomes, err := notation.Verify(ctx, verifier, repo, verifyOpts)
 	fmt.Printf("Descriptor: %+v\n", d)
 	if err != nil {
 		fmt.Printf("Error verifying image: %v\n", err.Error())
@@ -243,8 +247,6 @@ func TestVerifyImage(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	tl := testLogger{}
-	ctx = log.WithLogger(ctx, tl)
 
 	resp, err := client.VerifyImage(ctx, r)
 	if err != nil {
