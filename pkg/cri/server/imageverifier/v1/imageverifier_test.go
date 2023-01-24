@@ -12,6 +12,8 @@ import (
 	"testing"
 
 	"github.com/containerd/ttrpc"
+	_ "github.com/notaryproject/notation-core-go/signature/cose"
+	_ "github.com/notaryproject/notation-core-go/signature/jws"
 	notationX509 "github.com/notaryproject/notation-core-go/x509"
 	"github.com/notaryproject/notation-go"
 	"github.com/notaryproject/notation-go/log"
