@@ -34,7 +34,7 @@ const socket = "/tmp/imageverifier.sock"
 type testLogger struct{}
 
 func (tl testLogger) Debug(args ...interface{}) {
-	fmt.Print("DEBUG: ", fmt.Sprint(args...))
+	fmt.Print("DEBUG: ", fmt.Sprint(args...), "\n")
 }
 
 func (tl testLogger) Debugf(format string, args ...interface{}) {
@@ -47,7 +47,7 @@ func (tl testLogger) Debugln(args ...interface{}) {
 }
 
 func (tl testLogger) Info(args ...interface{}) {
-	fmt.Print("INFO: ", fmt.Sprint(args...))
+	fmt.Print("INFO: ", fmt.Sprint(args...), "\n")
 }
 
 func (tl testLogger) Infof(format string, args ...interface{}) {
@@ -60,7 +60,7 @@ func (tl testLogger) Infoln(args ...interface{}) {
 }
 
 func (tl testLogger) Warn(args ...interface{}) {
-	fmt.Print("WARN: ", fmt.Sprint(args...))
+	fmt.Print("WARN: ", fmt.Sprint(args...), "\n")
 }
 
 func (tl testLogger) Warnf(format string, args ...interface{}) {
@@ -73,7 +73,7 @@ func (tl testLogger) Warnln(args ...interface{}) {
 }
 
 func (tl testLogger) Error(args ...interface{}) {
-	fmt.Print("ERROR: ", fmt.Sprint(args...))
+	fmt.Print("ERROR: ", fmt.Sprint(args...), "\n")
 }
 
 func (tl testLogger) Errorf(format string, args ...interface{}) {
@@ -169,12 +169,8 @@ func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest
 
 	_, outcomes, err := notation.Verify(ctx, verifier, repo, verifyOpts)
 	if err != nil {
-		fmt.Printf("Error verifying image: %v\n", err.Error())
+		return &VerifyImageResponse{Ok: false, Reason: fmt.Sprintf("Error verifying image: %v\n", err.Error())}
 	}
-	if outcomes == nil {
-		fmt.Printf("outcomes is nil\n")
-	}
-	fmt.Printf("outcomes: %+v\n", outcomes)
 
 	var ok bool = true
 	reasons := make([]string, 0)
