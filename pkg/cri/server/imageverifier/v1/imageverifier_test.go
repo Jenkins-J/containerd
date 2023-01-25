@@ -169,7 +169,7 @@ func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest
 
 	_, outcomes, err := notation.Verify(ctx, verifier, repo, verifyOpts)
 	if err != nil {
-		return &VerifyImageResponse{Ok: false, Reason: fmt.Sprintf("Error verifying image: %v\n", err.Error())}
+		return &VerifyImageResponse{Ok: false, Reason: fmt.Sprintf("Error verifying image: %v\n", err.Error())}, fmt.Errorf("Image verification failed")
 	}
 
 	var ok bool = true
@@ -183,7 +183,7 @@ func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest
 
 	if !ok {
 		r := strings.Join(reasons, "; ")
-		return &VerifyImageResponse{Ok: ok, Reason: r}, nil
+		return &VerifyImageResponse{Ok: ok, Reason: r}, fmt.Errorf("Image verification failed")
 	}
 
 	return &VerifyImageResponse{Ok: ok, Reason: "Passed all verifications"}, nil
