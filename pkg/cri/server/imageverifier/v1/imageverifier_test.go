@@ -140,15 +140,14 @@ func loadTrustPolicy() (*trustpolicy.Document, error) {
 func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest) (*VerifyImageResponse, error) {
 	// ORAS parse reference -> ref
 	reference := fmt.Sprintf("%s@%s", req.ImageName, req.ImageDigest)
-	fmt.Printf("Image to verify: %v\n", reference)
 
 	// create repository with ref -> repo
 	remoteRepo, err := remote.NewRepository(reference)
 	if err != nil {
 		return &VerifyImageResponse{Ok: false, Reason: err.Error()}, fmt.Errorf("Failed to create repository client: %s\n", err.Error())
 	}
+	// TODO: choose if repository is http or https
 	remoteRepo.PlainHTTP = true
-	fmt.Printf("oras remote repo: %+v\n", remoteRepo)
 	repo := notationregistry.NewRepository(remoteRepo)
 
 	store := &trustStore{}
@@ -168,15 +167,7 @@ func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest
 	tl := testLogger{}
 	ctx = log.WithLogger(ctx, tl)
 
-	// test artifact descriptor
-	artifactDes, err := repo.Resolve(ctx, verifyOpts.ArtifactReference)
-	if err != nil {
-		fmt.Printf("error resolving descriptor: %s\n", err.Error())
-	}
-	fmt.Printf("Des %+v\n", artifactDes)
-
-	d, outcomes, err := notation.Verify(ctx, verifier, repo, verifyOpts)
-	fmt.Printf("Descriptor: %+v\n", d)
+	_, outcomes, err := notation.Verify(ctx, verifier, repo, verifyOpts)
 	if err != nil {
 		fmt.Printf("Error verifying image: %v\n", err.Error())
 	}
