@@ -8,6 +8,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -87,6 +88,11 @@ func (tl testLogger) Errorln(args ...interface{}) {
 
 type notaryVerifier struct{}
 type trustStore struct{}
+type verifyConfig struct {
+	InsecureRegistries []string             `json"insecureRegistries,omitempty"`
+	CertLocations      []string             `json:"certs"`
+	Policy             trustpolicy.Document `json:"policy"`
+}
 
 var _ = truststore.X509TrustStore(trustStore{})
 
@@ -102,6 +108,30 @@ func (t trustStore) GetCertificates(ctx context.Context, storeType truststore.Ty
 		certs = append(certs, cert...)
 	}
 	return certs, nil
+}
+
+func getDefaultConfigPath() string {
+	var configPath string
+	homeDir := os.Getenv("HOME")
+	configPath = filepath.Join(homeDir, ".containerv", "config.json")
+	return configPath
+}
+
+func loadConfig() (verifyConfig, error) {
+	configPath := getDefaultConfigPath()
+	config := verifyConfig{}
+
+	content, err := os.ReadFile(configPath)
+	if err != nil {
+		return config, fmt.Errorf("Error reading config file: %s\n", err.Error())
+	}
+	err = json.Unmarshal(content, &config)
+	if err != nil {
+		return config, fmt.Errorf("Error reading config file: %s\n", err.Error())
+	}
+
+	return config, nil
+
 }
 
 // TODO: load policy from file
@@ -264,4 +294,10 @@ func TestLoadTrustPolicy(t *testing.T) {
 		t.Errorf("Error retrieving trust policy: %s\n", err.Error())
 	}
 	assert.NotEmpty(t, p)
+}
+
+func TestLoadConfig(t *testing.T) {
+	config := loadConfig()
+
+	assert.NotNil(t, config)
 }
