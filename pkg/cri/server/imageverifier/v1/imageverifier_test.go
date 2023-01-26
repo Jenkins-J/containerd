@@ -297,7 +297,8 @@ func TestLoadTrustPolicy(t *testing.T) {
 }
 
 func TestLoadConfig(t *testing.T) {
-	config := loadConfig()
+	config, err := loadConfig()
 
+	assert.NotNil(t, err)
 	assert.NotNil(t, config)
 }
