@@ -30,6 +30,8 @@ import (
 
 const socket = "/tmp/imageverifier.sock"
 
+var verifierConfiguration verifyConfig
+
 // test logger
 
 type testLogger struct{}
@@ -181,7 +183,8 @@ func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest
 	repo := notationregistry.NewRepository(remoteRepo)
 
 	store := &trustStore{}
-	policy, err := loadTrustPolicy()
+	//policy, err := loadTrustPolicy()
+	policy := verifierConfiguration.Policy
 	if err != nil {
 		return &VerifyImageResponse{Ok: false, Reason: err.Error()}, fmt.Errorf("Failed to load trust policy: %s\n", err.Error())
 	}
@@ -220,6 +223,11 @@ func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest
 }
 
 func TestMain(m *testing.M) {
+	verifierConfiguration, err := loadConfig()
+	if err != nil {
+		fmt.Printf("Error loading configuration file: %s\n", err.Error())
+	}
+
 	server, err := ttrpc.NewServer()
 	if err != nil {
 		fmt.Printf("Error creating ttrpc server: %s\n", err.Error())
