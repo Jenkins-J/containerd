@@ -298,8 +298,11 @@ func TestLoadTrustPolicy(t *testing.T) {
 
 func TestLoadConfig(t *testing.T) {
 	config, err := loadConfig()
+	if err != nil {
+		fmt.Printf("Error loading config: %s\n", err.Error())
+	}
 
-	assert.NotNil(t, err)
+	assert.Nil(t, err)
 	assert.NotNil(t, config)
 	assert.NotEmpty(t, config)
 }
