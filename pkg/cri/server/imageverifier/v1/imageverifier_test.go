@@ -301,4 +301,5 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.NotNil(t, err)
 	assert.NotNil(t, config)
+	assert.NotEmpty(t, confg)
 }
