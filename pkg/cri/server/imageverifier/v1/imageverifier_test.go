@@ -101,13 +101,14 @@ var _ = truststore.X509TrustStore(trustStore{})
 func (t trustStore) GetCertificates(ctx context.Context, storeType truststore.Type, namedStore string) ([]*x509.Certificate, error) {
 	certs := make([]*x509.Certificate, 0)
 
-	// TODO: retrieve certs from disk/storage
-	cert, err := notationX509.ReadCertificateFile("/home/ubuntu/cert")
-	if err != nil {
-		return certs, err
-	}
-	if cert != nil {
-		certs = append(certs, cert...)
+	for _, path := range verifierConfiguration.CertLocations {
+		cert, err := notationX509.ReadCertificateFile(path)
+		if err != nil {
+			return certs, err
+		}
+		if cert != nil {
+			certs = append(certs, cert...)
+		}
 	}
 	return certs, nil
 }
