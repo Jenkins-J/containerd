@@ -184,7 +184,7 @@ func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest
 
 	store := &trustStore{}
 	//policy, err := loadTrustPolicy()
-	policy := verifierConfiguration.Policy
+	policy := &verifierConfiguration.Policy
 	if err != nil {
 		return &VerifyImageResponse{Ok: false, Reason: err.Error()}, fmt.Errorf("Failed to load trust policy: %s\n", err.Error())
 	}
@@ -223,10 +223,11 @@ func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest
 }
 
 func TestMain(m *testing.M) {
-	verifierConfiguration, err := loadConfig()
+	c, err := loadConfig()
 	if err != nil {
 		fmt.Printf("Error loading configuration file: %s\n", err.Error())
 	}
+	verifierConfiguration = c
 
 	server, err := ttrpc.NewServer()
 	if err != nil {
