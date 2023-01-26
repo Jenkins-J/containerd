@@ -137,39 +137,6 @@ func loadConfig() (verifyConfig, error) {
 
 }
 
-// TODO: load policy from file
-func loadTrustPolicy() (*trustpolicy.Document, error) {
-	defaultPolicy := `
-{
-	"version": "1.0",
-	"trustPolicies": [
-			{
-					"name": "default",
-					"registryScopes": [
-							"*"
-					],
-					"signatureVerification": {
-							"level": "strict"
-					},
-					"trustStores": [
-							"ca:wabbit-networks.io"
-					],
-					"trustedIdentities": [
-							"*"
-					]
-			}
-	]
-}
-`
-
-	policy := &trustpolicy.Document{}
-	err := json.Unmarshal([]byte(defaultPolicy), policy)
-	if err != nil {
-		return policy, fmt.Errorf("Could not decode trust policy: %s\n", err.Error())
-	}
-	return policy, nil
-}
-
 func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest) (*VerifyImageResponse, error) {
 	// ORAS parse reference -> ref
 	reference := fmt.Sprintf("%s@%s", req.ImageName, req.ImageDigest)
@@ -184,7 +151,6 @@ func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest
 	repo := notationregistry.NewRepository(remoteRepo)
 
 	store := &trustStore{}
-	//policy, err := loadTrustPolicy()
 	policy := &verifierConfiguration.Policy
 	if err != nil {
 		return &VerifyImageResponse{Ok: false, Reason: err.Error()}, fmt.Errorf("Failed to load trust policy: %s\n", err.Error())
@@ -296,14 +262,6 @@ func TestGetCertificate(t *testing.T) {
 		t.Errorf("Error retrieving certificates: %s\n", err.Error())
 	}
 	assert.NotEmpty(t, c)
-}
-
-func TestLoadTrustPolicy(t *testing.T) {
-	p, err := loadTrustPolicy()
-	if err != nil {
-		t.Errorf("Error retrieving trust policy: %s\n", err.Error())
-	}
-	assert.NotEmpty(t, p)
 }
 
 func TestLoadConfig(t *testing.T) {
