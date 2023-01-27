@@ -156,11 +156,19 @@ func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest
 
 	// create repository with ref -> repo
 	remoteRepo, err := remote.NewRepository(reference)
+	fmt.Printf("Remote Repo: %+v\n", remoteRepo)
 	if err != nil {
 		return &VerifyImageResponse{Ok: false, Reason: err.Error()}, fmt.Errorf("Failed to create repository client: %s\n", err.Error())
 	}
 	// TODO: choose if repository is http or https
-	remoteRepo.PlainHTTP = true
+	if verifierConfiguration.InsecureRegistries != nil {
+		for _, reg := range verifierConfiguration.InsecureRegistries {
+			if reg == remoteRepo.Reference.Registry {
+				remoteRepo.PlainHTTP = true
+				break
+			}
+		}
+	}
 	repo := notationregistry.NewRepository(remoteRepo)
 
 	store := &trustStore{}
