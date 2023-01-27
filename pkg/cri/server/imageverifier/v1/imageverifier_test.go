@@ -121,7 +121,7 @@ func (t trustStore) GetCertificates(ctx context.Context, storeType truststore.Ty
 			return nil
 		})
 		if walkErr != nil {
-			fmt.Printf("Walk Error, ending walk: %s\n", err.Error())
+			fmt.Printf("Walk Error, ending walk: %s\n", walkErr.Error())
 			break
 		}
 	}
