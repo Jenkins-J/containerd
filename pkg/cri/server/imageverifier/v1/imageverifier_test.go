@@ -24,7 +24,6 @@ import (
 	"github.com/notaryproject/notation-go/verifier/truststore"
 	"github.com/stretchr/testify/assert"
 
-	// "oras.land/oras-go/v2/registry"
 	notationregistry "github.com/notaryproject/notation-go/registry"
 	"oras.land/oras-go/v2/registry/remote"
 )
