@@ -161,13 +161,15 @@ func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest
 	fmt.Printf("%+v\n", remoteRepo.Reference.Registry)
 	fmt.Printf("%+v\n", remoteRepo.Reference.Repository)
 	fmt.Printf("%+v\n", remoteRepo.Reference.Reference)
+	registryName := fmt.Sprintf("%s/%s", remoteRepo.Reference.Registry, remoteRepo.Reference.Repository)
+	fmt.Printf("Registry name: %s\n", registryName)
 	if err != nil {
 		return &VerifyImageResponse{Ok: false, Reason: err.Error()}, fmt.Errorf("Failed to create repository client: %s\n", err.Error())
 	}
 	// TODO: choose if repository is http or https
 	if verifierConfiguration.InsecureRegistries != nil {
 		for _, reg := range verifierConfiguration.InsecureRegistries {
-			if reg == remoteRepo.Reference.Registry {
+			if reg == registryName {
 				remoteRepo.PlainHTTP = true
 				break
 			}
