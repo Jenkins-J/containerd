@@ -158,6 +158,9 @@ func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest
 	remoteRepo, err := remote.NewRepository(reference)
 	fmt.Printf("Remote Repo: %+v\n", remoteRepo)
 	fmt.Printf("%+v\n", remoteRepo.Reference)
+	fmt.Printf("%+v\n", remoteRepo.Reference.Registry)
+	fmt.Printf("%+v\n", remoteRepo.Reference.Repository)
+	fmt.Printf("%+v\n", remoteRepo.Reference.Reference)
 	if err != nil {
 		return &VerifyImageResponse{Ok: false, Reason: err.Error()}, fmt.Errorf("Failed to create repository client: %s\n", err.Error())
 	}
