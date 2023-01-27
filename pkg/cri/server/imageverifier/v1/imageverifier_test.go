@@ -107,7 +107,6 @@ func (t trustStore) GetCertificates(ctx context.Context, storeType truststore.Ty
 			if e != nil {
 				fmt.Printf("Error walking directory tree: %s\n", e.Error())
 			}
-			fmt.Printf("%+v\n", d)
 			if !(d.IsDir()) {
 				cert, err := notationX509.ReadCertificateFile(path)
 				if err != nil {
