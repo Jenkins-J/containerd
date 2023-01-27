@@ -102,13 +102,22 @@ func (t trustStore) GetCertificates(ctx context.Context, storeType truststore.Ty
 	certs := make([]*x509.Certificate, 0)
 
 	for _, path := range verifierConfiguration.CertLocations {
-		cert, err := notationX509.ReadCertificateFile(path)
-		if err != nil {
-			return certs, err
-		}
-		if cert != nil {
-			certs = append(certs, cert...)
-		}
+		err := filepath.WalkDir(path, func(path string, d filepath.DirEntry, e error) error {
+			if e != nil {
+				fmt.Printf("Error walking directory tree: %s\n", e.Error())
+			}
+			fmt.Printf("%+v\n", d)
+			if !(d.IsDir()) {
+				cert, err := notationX509.ReadCertificateFile(path)
+				if err != nil {
+					return certs, err
+				}
+				if cert != nil {
+					certs = append(certs, cert...)
+				}
+			}
+			return nil
+		})
 	}
 	return certs, nil
 }
