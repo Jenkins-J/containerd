@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"math"
 	"net"
 	"os"
@@ -102,7 +103,7 @@ func (t trustStore) GetCertificates(ctx context.Context, storeType truststore.Ty
 	certs := make([]*x509.Certificate, 0)
 
 	for _, path := range verifierConfiguration.CertLocations {
-		err := filepath.WalkDir(path, func(path string, d filepath.DirEntry, e error) error {
+		walkErr := filepath.WalkDir(path, func(path string, d fs.DirEntry, e error) error {
 			if e != nil {
 				fmt.Printf("Error walking directory tree: %s\n", e.Error())
 			}
@@ -110,7 +111,8 @@ func (t trustStore) GetCertificates(ctx context.Context, storeType truststore.Ty
 			if !(d.IsDir()) {
 				cert, err := notationX509.ReadCertificateFile(path)
 				if err != nil {
-					return certs, err
+					// return certs, err
+					fmt.Printf("Error loading cert: %s\n", err.Error())
 				}
 				if cert != nil {
 					certs = append(certs, cert...)
@@ -118,6 +120,10 @@ func (t trustStore) GetCertificates(ctx context.Context, storeType truststore.Ty
 			}
 			return nil
 		})
+		if walkErr != nil {
+			fmt.Printf("Walk Error, ending walk: %s\n", err.Error())
+			break
+		}
 	}
 	return certs, nil
 }
