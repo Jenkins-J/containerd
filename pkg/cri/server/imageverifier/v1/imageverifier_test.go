@@ -91,7 +91,7 @@ func (tl testLogger) Errorln(args ...interface{}) {
 type notaryVerifier struct{}
 type trustStore struct{}
 type verifyConfig struct {
-	InsecureRegistries []string             `json"insecureRegistries,omitempty"`
+	InsecureRegistries []string             `json:"insecureRegistries,omitempty"`
 	CertLocations      []string             `json:"certs"`
 	Policy             trustpolicy.Document `json:"policy"`
 }
@@ -178,7 +178,7 @@ func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest
 		return &VerifyImageResponse{Ok: false, Reason: err.Error()}, fmt.Errorf("Failed to load trust policy: %s\n", err.Error())
 	}
 
-	verifier, err := verifier.New(policy, store, nil)
+	imgVerifier, err := verifier.New(policy, store, nil)
 
 	verifyOpts := notation.RemoteVerifyOptions{
 		MaxSignatureAttempts: math.MaxInt64,
@@ -189,7 +189,7 @@ func (v notaryVerifier) VerifyImage(ctx context.Context, req *VerifyImageRequest
 	tl := testLogger{}
 	ctx = log.WithLogger(ctx, tl)
 
-	_, outcomes, err := notation.Verify(ctx, verifier, repo, verifyOpts)
+	_, outcomes, err := notation.Verify(ctx, imgVerifier, repo, verifyOpts)
 	if err != nil {
 		return &VerifyImageResponse{Ok: false, Reason: fmt.Sprintf("Error verifying image: %v\n", err.Error())}, nil
 	}
