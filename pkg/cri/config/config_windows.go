@@ -20,7 +20,7 @@ import (
 	"os"
 	"path/filepath"
 
-	containerd "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/defaults"
 	"k8s.io/kubelet/pkg/cri/streaming"
 )
 
@@ -35,7 +35,7 @@ func DefaultConfig() PluginConfig {
 			NetworkPluginConfTemplate:  "",
 		},
 		ContainerdConfig: ContainerdConfig{
-			Snapshotter:        containerd.DefaultSnapshotter,
+			Snapshotter:        defaults.DefaultSnapshotter,
 			DefaultRuntimeName: "runhcs-wcow-process",
 			Runtimes: map[string]Runtime{
 				"runhcs-wcow-process": {

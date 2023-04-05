@@ -33,6 +33,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containerd/containerd/v2/defaults"
 	"github.com/containerd/log"
 	"github.com/containerd/log/logtest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -494,7 +495,7 @@ func initLocalCRIPlugin(client *containerd.Client, tmpDir string, registryCfg cr
 	cfg := criconfig.Config{
 		PluginConfig: criconfig.PluginConfig{
 			ContainerdConfig: criconfig.ContainerdConfig{
-				Snapshotter: containerd.DefaultSnapshotter,
+				Snapshotter: defaults.DefaultSnapshotter,
 			},
 			Registry:                 registryCfg,
 			ImagePullProgressTimeout: defaultImagePullProgressTimeout.String(),
