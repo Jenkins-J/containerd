@@ -18,6 +18,7 @@ package sbserver
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -281,6 +282,16 @@ func generateRuntimeOptions(r criconfig.Runtime, c criconfig.Config) (interface{
 	// For generic configuration, if no config path specified (preserving old behavior), pass
 	// the whole TOML configuration section to the runtime.
 	if runtimeOpts, ok := options.(*runtimeoptions.Options); ok && runtimeOpts.ConfigPath == "" {
+
+		if runtimeOpts.TypeUrl != "" {
+			body, err := json.Marshal(r.Options)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal config body as JSON for runtime %q: %v", r.Type, err)
+			}
+			runtimeOpts.ConfigBody = body
+			return options, nil
+		}
+
 		runtimeOpts.ConfigBody, err = optionsTree.Marshal()
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal TOML blob for runtime %q: %v", r.Type, err)
