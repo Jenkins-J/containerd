@@ -225,6 +225,8 @@ func CreateSnapshot(ctx context.Context, kind snapshots.Kind, key, parent string
 		}
 	}
 
+	fmt.Printf("*** Base Info: %+v ***\n", base)
+
 	err = createBucketIfNotExists(ctx, func(ctx context.Context, bkt, pbkt *bolt.Bucket) error {
 		var (
 			spbkt *bolt.Bucket
