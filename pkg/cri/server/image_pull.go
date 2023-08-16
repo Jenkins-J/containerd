@@ -158,6 +158,7 @@ func (c *criService) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 	// TODO: Add pod related labels for snapshotters to consume
 	sandboxns := r.SandboxConfig.Metadata.Namespace
 	labels["containerd.io/snapshot/pod.namespace"] = sandboxns
+	fmt.Printf("*** Added namespace Label: %+v ***\n", labels)
 
 	pullOpts := []containerd.RemoteOpt{
 		containerd.WithSchema1Conversion, //nolint:staticcheck // Ignore SA1019. Need to keep deprecated package for compatibility.
