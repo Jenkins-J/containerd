@@ -94,6 +94,7 @@ import (
 
 // PullImage pulls an image with authentication config.
 func (c *criService) PullImage(ctx context.Context, r *runtime.PullImageRequest) (_ *runtime.PullImageResponse, err error) {
+	log.G(ctx).Debugf("*** PULLING IMAGE CRI SERVER ***")
 	span := tracing.SpanFromContext(ctx)
 	defer func() {
 		// TODO: add domain label for imagePulls metrics, and we may need to provide a mechanism
