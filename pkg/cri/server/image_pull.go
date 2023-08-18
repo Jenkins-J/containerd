@@ -163,12 +163,13 @@ func (c *criService) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 			sandboxns = sbmeta.Namespace
 			log.G(ctx).Infof("*** Added namespace Label: %+v ***", labels)
 		} else {
-			log.G(ctx).Debugf("*** NIL SANDBOX METADATA ***")
+			log.G(ctx).Infof("*** NIL SANDBOX METADATA ***")
 		}
 	} else {
-		log.G(ctx).Debugf("*** NIL SANDBOX CONFIG ***")
+		log.G(ctx).Infof("*** NIL SANDBOX CONFIG ***")
 	}
-	labels["containerd.io/snapshot/pod.namespace"] = sandboxns
+	labels["containerd.io/snapshot.pod.namespace"] = sandboxns
+	log.G(ctx).Infof("*** Labels: %+v ***", labels)
 
 	pullOpts := []containerd.RemoteOpt{
 		containerd.WithSchema1Conversion, //nolint:staticcheck // Ignore SA1019. Need to keep deprecated package for compatibility.

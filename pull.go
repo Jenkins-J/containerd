@@ -270,6 +270,8 @@ func (c *Client) fetch(ctx context.Context, rCtx *RemoteContext, ref string, lim
 		}
 	}
 
+	fmt.Printf("*** Image labels in pull.go: %+v ***", rCtx.Labels)
+
 	return images.Image{
 		Name:   name,
 		Target: desc,
