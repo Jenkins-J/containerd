@@ -19,6 +19,7 @@ package snapshots
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -456,6 +457,7 @@ func FilterInheritedLabels(labels map[string]string) map[string]string {
 
 	filtered := make(map[string]string)
 	for k, v := range labels {
+		fmt.Printf("Label key: %+v\n", k)
 		if k == labelSnapshotRef || strings.HasPrefix(k, inheritedLabelsPrefix) {
 			filtered[k] = v
 		}
