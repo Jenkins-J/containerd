@@ -168,7 +168,7 @@ func (c *criService) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 	} else {
 		log.G(ctx).Infof("*** NIL SANDBOX CONFIG ***")
 	}
-	labels["containerd.io/snapshot.pod.namespace"] = sandboxns
+	labels["containerd.io/snapshot/pod.namespace"] = sandboxns
 	log.G(ctx).Infof("*** Labels: %+v ***", labels)
 
 	pullOpts := []containerd.RemoteOpt{
