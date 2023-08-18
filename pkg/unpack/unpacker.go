@@ -304,6 +304,7 @@ func (u *Unpacker) unpack(
 
 		// inherits annotations which are provided as snapshot labels.
 		snapshotLabels := snapshots.FilterInheritedLabels(desc.Annotations)
+		log.G(ctx).Infof("filtered snapshot labels: %+v", snapshotLabels)
 		if snapshotLabels == nil {
 			snapshotLabels = make(map[string]string)
 		}
