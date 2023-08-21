@@ -48,6 +48,7 @@ import (
 	distribution "github.com/containerd/containerd/reference/docker"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/containerd/containerd/remotes/docker/config"
+	"github.com/containerd/containerd/snapshots"
 	"github.com/containerd/containerd/tracing"
 )
 
@@ -168,13 +169,13 @@ func (c *criService) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 	} else {
 		log.G(ctx).Infof("*** NIL SANDBOX CONFIG ***")
 	}
-	labels["containerd.io/snapshot/pod.namespace"] = sandboxns
+	// labels["containerd.io/snapshot/pod.namespace"] = sandboxns
 	log.G(ctx).Infof("*** Labels: %+v ***", labels)
 
 	pullOpts := []containerd.RemoteOpt{
 		containerd.WithSchema1Conversion, //nolint:staticcheck // Ignore SA1019. Need to keep deprecated package for compatibility.
 		containerd.WithResolver(resolver),
-		containerd.WithPullSnapshotter(snapshotter),
+		containerd.WithPullSnapshotter(snapshotter, snapshots.WithLabels(map[string]string{"containerd.io/snapshot/pod.namespace": sandboxns})),
 		containerd.WithPullUnpack,
 		containerd.WithPullLabels(labels),
 		containerd.WithMaxConcurrentDownloads(c.config.MaxConcurrentDownloads),
