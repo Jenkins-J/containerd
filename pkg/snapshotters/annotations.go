@@ -42,7 +42,42 @@ const (
 	// the target image and will be passed to snapshotters for preparing layers in
 	// parallel. Skipping some layers is allowed and only affects performance.
 	TargetImageLayersLabel = "containerd.io/snapshot/cri.image-layers"
+	PodNamespaceLabel      = "containerd.io/snapshot/pod.namespace"
 )
+
+func AppendPodNamespaceHandlerWrapper(namespace string) func(f images.Handler) images.Handler {
+	return func(f images.Handler) images.Handler {
+		return images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+			children, err := f.Handle(ctx, desc)
+			if err != nil {
+				return nil, err
+			}
+			switch desc.MediaType {
+			case ocispec.MediaTypeImageManifest, images.MediaTypeDockerSchema2Manifest:
+				for i := range children {
+					c := &children[i]
+					if images.IsLayerType(c.MediaType) {
+						if c.Annotations == nil {
+							c.Annotations = make(map[string]string)
+						}
+						c.Annotations[PodNamespaceLabel] = namespace
+					}
+				}
+			}
+			return children, nil
+		})
+	}
+}
+
+// TODO
+// Test this function for proper behavior
+func ApplyHandlerWrappers(g, h func(f images.Handler) images.Handler) func(f images.Handler) images.Handler {
+	return func(f images.Handler) images.Handler {
+		return images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+			return g(h(f)).Handle(ctx, desc)
+		})
+	}
+}
 
 // AppendInfoHandlerWrapper makes a handler which appends some basic information
 // of images like digests for manifest and their child layers as annotations during unpack.
