@@ -162,7 +162,7 @@ func (c *criService) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 	if sbconfig := r.GetSandboxConfig(); sbconfig != nil {
 		if sbmeta := sbconfig.GetMetadata(); sbmeta != nil {
 			sandboxns = sbmeta.Namespace
-			log.G(ctx).Infof("*** Added namespace Label: %+v ***", labels)
+			log.G(ctx).Infof("*** Found sandbox namespace: %+v ***", sandboxns)
 		} else {
 			log.G(ctx).Infof("*** NIL SANDBOX METADATA ***")
 		}
