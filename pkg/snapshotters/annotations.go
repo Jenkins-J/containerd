@@ -76,6 +76,7 @@ func ApplyHandlerWrappers(wrappers ...func(f images.Handler) images.Handler) fun
 			handler := f
 			var nextHandler images.Handler
 			for len(wrappers) > 0 {
+				log.G(ctx).Infof("*** num wrappers: %+v ***", len(wrappers))
 				nextHandler = wrappers[len(wrappers)-1](handler)
 				handler = nextHandler
 				wrappers = wrappers[:len(wrappers)-1]
@@ -92,6 +93,7 @@ func ApplyHandlerWrappers(wrappers ...func(f images.Handler) images.Handler) fun
 func AppendInfoHandlerWrapper(ref string) func(f images.Handler) images.Handler {
 	return func(f images.Handler) images.Handler {
 		return images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+			log.G(ctx).Infof("*** Appending Info Labels ***")
 			children, err := f.Handle(ctx, desc)
 			if err != nil {
 				return nil, err
