@@ -189,7 +189,7 @@ func (c *criService) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 		pullOpts = append(pullOpts,
 			//containerd.WithImageHandlerWrapper(snpkg.ApplyHandlerWrappers(snpkg.AppendInfoHandlerWrapper(ref), snpkg.AppendPodNamespaceHandlerWrapper(sandboxns))))
 			//containerd.WithImageHandlerWrapper(snpkg.AppendInfoHandlerWrapper(ref)))
-			containerd.WithImageHandlerWrapper(snpkg.AppendPodNamespaceHandlerWrapper(snadboxns)))
+			containerd.WithImageHandlerWrapper(snpkg.AppendPodNamespaceHandlerWrapper(sandboxns)))
 	}
 
 	if c.config.ContainerdConfig.DiscardUnpackedLayers {
