@@ -18,6 +18,7 @@ package snapshotters
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/labels"
@@ -46,6 +47,7 @@ const (
 )
 
 func AppendPodNamespaceHandlerWrapper(namespace string) func(f images.Handler) images.Handler {
+	fmt.Printf("*** Applying Namespace wrapper\n ***")
 	return func(f images.Handler) images.Handler {
 		return images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 			log.G(ctx).Infof("*** Appending Namespace Label ***")
@@ -71,6 +73,7 @@ func AppendPodNamespaceHandlerWrapper(namespace string) func(f images.Handler) i
 }
 
 func ApplyHandlerWrappers(g, h func(f images.Handler) images.Handler) func(f images.Handler) images.Handler {
+	fmt.Printf("*** Applying handler wrappers ***\n")
 	return func(f images.Handler) images.Handler {
 		return images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 			log.G(ctx).Infof("*** Applying handler wrappers ***")
