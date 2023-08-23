@@ -71,9 +71,9 @@ func AppendPodNamespaceHandlerWrapper(namespace string) func(f images.Handler) i
 }
 
 func ApplyHandlerWrappers(g, h func(f images.Handler) images.Handler) func(f images.Handler) images.Handler {
-	log.G(ctx).Infof("*** Applying handler wrappers ***")
 	return func(f images.Handler) images.Handler {
 		return images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+			log.G(ctx).Infof("*** Applying handler wrappers ***")
 			return g(h(f)).Handle(ctx, desc)
 		})
 	}
