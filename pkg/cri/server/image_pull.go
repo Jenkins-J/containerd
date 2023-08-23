@@ -48,7 +48,6 @@ import (
 	distribution "github.com/containerd/containerd/reference/docker"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/containerd/containerd/remotes/docker/config"
-	"github.com/containerd/containerd/snapshots"
 	"github.com/containerd/containerd/tracing"
 )
 
@@ -174,7 +173,8 @@ func (c *criService) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 	pullOpts := []containerd.RemoteOpt{
 		containerd.WithSchema1Conversion, //nolint:staticcheck // Ignore SA1019. Need to keep deprecated package for compatibility.
 		containerd.WithResolver(resolver),
-		containerd.WithPullSnapshotter(snapshotter, snapshots.WithLabels(map[string]string{"containerd.io/snapshot/pod.namespace": sandboxns})),
+		//containerd.WithPullSnapshotter(snapshotter, snapshots.WithLabels(map[string]string{"containerd.io/snapshot/pod.namespace": sandboxns})),
+		containerd.WithPullSnapshotter(snapshotter),
 		containerd.WithPullUnpack,
 		containerd.WithPullLabels(labels),
 		containerd.WithMaxConcurrentDownloads(c.config.MaxConcurrentDownloads),
@@ -187,8 +187,8 @@ func (c *criService) PullImage(ctx context.Context, r *runtime.PullImageRequest)
 	pullOpts = append(pullOpts, c.encryptedImagesPullOpts()...)
 	if !c.config.ContainerdConfig.DisableSnapshotAnnotations {
 		pullOpts = append(pullOpts,
-			//containerd.WithImageHandlerWrapper(snpkg.ApplyHandlerWrappers(snpkg.AppendInfoHandlerWrapper(ref), snpkg.AppendPodNamespaceHandlerWrapper(sandboxns))))
-			containerd.WithImageHandlerWrapper(snpkg.AppendInfoHandlerWrapper(ref)))
+			containerd.WithImageHandlerWrapper(snpkg.ApplyHandlerWrappers(snpkg.AppendInfoHandlerWrapper(ref), snpkg.AppendPodNamespaceHandlerWrapper(sandboxns))))
+		//containerd.WithImageHandlerWrapper(snpkg.AppendInfoHandlerWrapper(ref)))
 	}
 
 	if c.config.ContainerdConfig.DiscardUnpackedLayers {
