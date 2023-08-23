@@ -48,6 +48,7 @@ const (
 func AppendPodNamespaceHandlerWrapper(namespace string) func(f images.Handler) images.Handler {
 	return func(f images.Handler) images.Handler {
 		return images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+			log.G(ctx).Infof("*** Appending Namespace Label ***")
 			children, err := f.Handle(ctx, desc)
 			if err != nil {
 				return nil, err
