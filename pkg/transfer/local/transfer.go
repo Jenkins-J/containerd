@@ -65,6 +65,7 @@ func NewTransferService(lm leases.Manager, cs content.Store, is images.Store, vf
 }
 
 func (ts *localTransferService) Transfer(ctx context.Context, src interface{}, dest interface{}, opts ...transfer.Opt) error {
+	fmt.Printf("*** CALLING LOCAL TRANSFER SERVICE ***\n")
 	topts := &transfer.Config{}
 	for _, opt := range opts {
 		opt(topts)
