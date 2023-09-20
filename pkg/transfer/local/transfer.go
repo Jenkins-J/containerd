@@ -75,6 +75,7 @@ func (ts *localTransferService) Transfer(ctx context.Context, src interface{}, d
 	case transfer.ImageFetcher:
 		switch d := dest.(type) {
 		case transfer.ImageStorer:
+			fmt.Printf("*** CALLING TRANSFER SERVICE PULL ***\n")
 			return ts.pull(ctx, s, d, topts)
 		}
 	case transfer.ImageGetter:

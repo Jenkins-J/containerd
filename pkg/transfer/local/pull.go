@@ -34,6 +34,7 @@ import (
 )
 
 func (ts *localTransferService) pull(ctx context.Context, ir transfer.ImageFetcher, is transfer.ImageStorer, tops *transfer.Config) error {
+	fmt.Printf("*** PULLING IMAGE ***\n")
 	ctx, done, err := ts.withLease(ctx)
 	if err != nil {
 		return err
@@ -56,6 +57,7 @@ func (ts *localTransferService) pull(ctx context.Context, ir transfer.ImageFetch
 	}
 
 	// Verify image before pulling.
+	fmt.Printf("verifiers: %+v\n", ts.verifiers)
 	for vfName, vf := range ts.verifiers {
 		log := log.G(ctx).WithFields(logrus.Fields{
 			"name":     name,
