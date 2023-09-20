@@ -19,6 +19,7 @@ package containerd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 
 	streamingapi "github.com/containerd/containerd/api/services/streaming/v1"
@@ -32,6 +33,7 @@ import (
 )
 
 func (c *Client) Transfer(ctx context.Context, src interface{}, dest interface{}, opts ...transfer.Opt) error {
+	fmt.Printf("*** TRANSFER CLIENT CALLED TRANSFER ***\n")
 	ctx, done, err := c.WithLease(ctx)
 	if err != nil {
 		return err

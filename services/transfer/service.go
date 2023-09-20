@@ -18,6 +18,7 @@ package transfer
 
 import (
 	"context"
+	"fmt"
 
 	transferapi "github.com/containerd/containerd/api/services/transfer/v1"
 	transferTypes "github.com/containerd/containerd/api/types/transfer"
@@ -84,6 +85,7 @@ func (s *service) Register(gs *grpc.Server) error {
 }
 
 func (s *service) Transfer(ctx context.Context, req *transferapi.TransferRequest) (*emptypb.Empty, error) {
+	fmt.Printf("*** TRANSFER SERVICE REQUEST RECEIVED ***\n")
 	var transferOpts []transfer.Opt
 	if req.Options != nil {
 		if req.Options.ProgressStream != "" {
