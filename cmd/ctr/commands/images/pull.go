@@ -99,6 +99,7 @@ command. As part of this process, we do the following:
 		defer cancel()
 
 		if !context.BoolT("local") {
+			fmt.Printf("Not local, use transfer service\n")
 			ch, err := commands.NewStaticCredentials(ctx, context, ref)
 			if err != nil {
 				return err
