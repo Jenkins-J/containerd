@@ -138,6 +138,7 @@ command. As part of this process, we do the following:
 			pf, done := ProgressHandler(ctx, os.Stdout)
 			defer done()
 
+			fmt.Printf("*** Using Transfer service ***\n")
 			return client.Transfer(ctx, reg, is, transfer.WithProgress(pf))
 		}
 
