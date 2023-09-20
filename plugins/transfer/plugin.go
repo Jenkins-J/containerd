@@ -142,6 +142,8 @@ func init() {
 			}
 			lc.RegistryConfigPath = config.RegistryConfigPath
 
+			fmt.Printf("*** Verifiers: %+v ***\n", vfs)
+
 			return local.NewTransferService(l.(leases.Manager), ms.ContentStore(), metadata.NewImageStore(ms), vfs, &lc), nil
 		},
 	})
