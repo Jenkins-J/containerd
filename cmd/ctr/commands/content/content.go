@@ -244,6 +244,7 @@ var (
 			fmt.Println("arg:", object)
 			client, ctx, cancel, err := commands.NewClient(context)
 			if err != nil {
+				fmt.Println("Error creating client")
 				return err
 			}
 			defer cancel()
@@ -255,6 +256,7 @@ var (
 
 			dgst, err := digest.Parse(object)
 			if err != nil {
+				fmt.Println("Error parsing digest:")
 				return err
 			}
 			labelGCContentRef := "containerd.io/gc.ref.content"
