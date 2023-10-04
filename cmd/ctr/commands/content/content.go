@@ -66,7 +66,6 @@ var (
 		ArgsUsage:   "[<digest>, ...]",
 		Description: "display the image object",
 		Action: func(context *cli.Context) error {
-			fmt.Println("arg:", context.Args().First())
 			dgst, err := digest.Parse(context.Args().First())
 			if err != nil {
 				return err
@@ -241,10 +240,8 @@ var (
 		Description: "Return all references to the given piece of content",
 		Action: func(context *cli.Context) error {
 			var object = context.Args().First()
-			fmt.Println("arg:", object)
 			client, ctx, cancel, err := commands.NewClient(context)
 			if err != nil {
-				fmt.Println("Error creating client")
 				return err
 			}
 			defer cancel()
@@ -256,10 +253,8 @@ var (
 
 			dgst, err := digest.Parse(object)
 			if err != nil {
-				fmt.Println("Error parsing digest:")
 				return err
 			}
-			fmt.Println("digest successfully parsed!")
 			labelGCContentRef := "containerd.io/gc.ref.content"
 			walkFn := func(info content.Info) error {
 				var isRef = false
@@ -286,7 +281,7 @@ var (
 				return nil
 			}
 
-			args := []string(context.Args())
+			args := make([]string,0)
 			return cs.Walk(ctx, walkFn, args...)
 		},
 	}
