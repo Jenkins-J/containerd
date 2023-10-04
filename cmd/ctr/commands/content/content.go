@@ -259,6 +259,7 @@ var (
 				fmt.Println("Error parsing digest:")
 				return err
 			}
+			fmt.Println("digest successfully parsed!")
 			labelGCContentRef := "containerd.io/gc.ref.content"
 			walkFn := func(info content.Info) error {
 				var isRef = false
