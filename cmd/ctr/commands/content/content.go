@@ -261,7 +261,17 @@ var (
 			digestField := "target.digest"
 			filter := fmt.Sprintf("%s==%s", digestField, dgst)
 
-			imgStore.List(ctx, filter)
+			imgs, err := imgStore.List(ctx, filter)
+			if err != nil {
+				return err
+			}
+
+			imgNames := make([]string, 0)
+			for _, m := range imgs {
+				imgNames = append(imgNames, m.Name)
+			}
+
+			fmt.Printf("Images: %s\n", strings.Join(imgNames, ", "))
 			return nil
 		},
 	}
