@@ -239,50 +239,30 @@ var (
 		ArgsUsage:   "<digest>",
 		Description: "Return all references to the given piece of content",
 		Action: func(context *cli.Context) error {
+			// Images: use the existing filter to match on the image digest
+			// Content: add a content adaptor to the existing adaptors?
+			// Lease: Use the existing label filter? Or try to match on
+			// keys in content bucket?
+			// Sandbox: Use the existing label filter?
+			// Container: Use the existing label filter?
 			var object = context.Args().First()
 			client, ctx, cancel, err := commands.NewClient(context)
 			if err != nil {
 				return err
 			}
 			defer cancel()
-			cs := client.ContentStore()
-
-			tw := tabwriter.NewWriter(os.Stdout, 1, 8, 1, '\t', 0)
-			defer tw.Flush()
-			fmt.Fprintln(tw, "DIGEST\tSIZE\tAGE\tLABELS")
+			imgStore := client.ImageService()
 
 			dgst, err := digest.Parse(object)
 			if err != nil {
 				return err
 			}
-			labelGCContentRef := "containerd.io/gc.ref.content"
-			walkFn := func(info content.Info) error {
-				var isRef = false
-				var labelStrings []string
-				for k, v := range info.Labels {
-					if strings.HasPrefix(k, labelGCContentRef) && v == string(dgst) {
-						isRef = true
-					}
-					labelStrings = append(labelStrings, strings.Join([]string{k, v}, "="))
-				}
-				if isRef {
-					sort.Strings(labelStrings)
-					labels := strings.Join(labelStrings, ",")
-					if labels == "" {
-						labels = "-"
-					}
 
-					fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n",
-						info.Digest,
-						units.HumanSize(float64(info.Size)),
-						units.HumanDuration(time.Since(info.CreatedAt)),
-						labels)
-				}
-				return nil
-			}
+			digestField := "target.digest"
+			filter := fmt.Sprintf("%s==%s", digestField, dgst)
 
-			args := make([]string, 0)
-			return cs.Walk(ctx, walkFn, args...)
+			imgStore.List(ctx, filter)
+			return nil
 		},
 	}
 
@@ -628,6 +608,54 @@ var (
 		},
 	}
 )
+
+// temporarily hold old functionality of reference list command
+func getContentRef(context *cli.Context) error {
+	var object = context.Args().First()
+	client, ctx, cancel, err := commands.NewClient(context)
+	if err != nil {
+		return err
+	}
+	defer cancel()
+	cs := client.ContentStore()
+
+	tw := tabwriter.NewWriter(os.Stdout, 1, 8, 1, '\t', 0)
+	defer tw.Flush()
+	fmt.Fprintln(tw, "DIGEST\tSIZE\tAGE\tLABELS")
+
+	dgst, err := digest.Parse(object)
+	if err != nil {
+		return err
+	}
+	labelGCContentRef := "containerd.io/gc.ref.content"
+	walkFn := func(info content.Info) error {
+		var isRef = false
+		var labelStrings []string
+		for k, v := range info.Labels {
+			if strings.HasPrefix(k, labelGCContentRef) && v == string(dgst) {
+				isRef = true
+			}
+			labelStrings = append(labelStrings, strings.Join([]string{k, v}, "="))
+		}
+		if isRef {
+			sort.Strings(labelStrings)
+			labels := strings.Join(labelStrings, ",")
+			if labels == "" {
+				labels = "-"
+			}
+
+			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n",
+				info.Digest,
+				units.HumanSize(float64(info.Size)),
+				units.HumanDuration(time.Since(info.CreatedAt)),
+				labels)
+		}
+		return nil
+	}
+
+	args := make([]string, 0)
+	return cs.Walk(ctx, walkFn, args...)
+}
 
 func edit(context *cli.Context, rd io.Reader) (_ io.ReadCloser, retErr error) {
 	editor := context.String("editor")
