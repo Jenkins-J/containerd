@@ -340,6 +340,7 @@ var (
 			fmt.Printf("Leases: %s\n", strings.Join(leaseRefs, ", "))
 
 			// Snapshots
+
 			// Sandbox
 			ss := client.SandboxStore()
 			sandboxRefs := make([]string, 0)
@@ -361,6 +362,24 @@ var (
 			fmt.Printf("Sandboxes: %s\n", strings.Join(sandboxRefs, ", "))
 
 			// Container
+			containerSvc:= client.ContainerService()
+			containerRefs := make([]string, 0)
+
+			containerList, err := containerSvc.List(ctx)
+			if err != nil {
+				return err
+			}
+
+			for _, container := range containerList {
+				for k, v := range container.Labels {
+					if strings.HasPrefix(k, labelGCContentRef) && v == string(dgst) {
+						containerRefs = append(containerRefs, container.ID)
+						break
+					}
+				}
+			}
+
+			fmt.Printf("Containers: %s\n", strings.Join(containerRefs, ", "))
 
 			return nil
 		},
