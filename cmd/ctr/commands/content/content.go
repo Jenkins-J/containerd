@@ -311,6 +311,34 @@ var (
 			fmt.Printf("Content: %s\n", strings.Join(ids, ", "))
 
 			// Lease
+			leaseRefs := make([]string, 0)
+			contentKey := "content"
+			lm := client.LeasesService()
+
+			leases, err := lm.List(ctx)
+			if err != nil {
+				return err
+			}
+
+			for _, lease := range leases {
+				resources, err := lm.ListResources(ctx, lease)
+				if err != nil {
+					return err
+				}
+
+				for _, r := range resources {
+					if r.Type != contentKey {
+						continue
+					}
+
+					if r.ID == string(dgst) {
+						leaseRefs = append(leaseRefs, lease.ID)
+					}
+				}
+			}
+
+			fmt.Printf("Leases: %s\n", strings.Join(leaseRefs, ", "))
+
 			// Sandbox
 			// Container
 
