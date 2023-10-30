@@ -17,6 +17,7 @@
 package content
 
 import (
+	gocontext "context"
 	"errors"
 	"fmt"
 	"io"
@@ -30,6 +31,7 @@ import (
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/remotes"
+	"github.com/containerd/containerd/snapshots"
 	"github.com/containerd/log"
 	units "github.com/docker/go-units"
 	digest "github.com/opencontainers/go-digest"
@@ -340,6 +342,29 @@ var (
 			fmt.Printf("Leases: %s\n", strings.Join(leaseRefs, ", "))
 
 			// Snapshots
+			snapshotterRefs := make([]string, 0)
+			snapshotSvc := client.SnapshotService(context.GlobalString("snapshotter"))
+			snapWalkFn := func (_ gocontext.Context, info snapshots.Info) error {
+				isRef := false
+				for k, v := range info.Labels {
+					if strings.HasPrefix(k, labelGCContentRef) && v == string(dgst) {
+						isRef = true
+						break
+					}
+				}
+				if isRef {
+					snapshotterRefs = append(snapshotterRefs, info.Name)
+				}
+				return nil
+			}
+
+			args = make([]string, 0)
+			err = snapshotSvc.Walk(ctx, snapWalkFn, args...)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("snapshots: %s\n", strings.Join(snapshotterRefs, ", "))
 
 			// Sandbox
 			ss := client.SandboxStore()
