@@ -282,12 +282,11 @@ var (
 
 			ids := make([]string, 0)
 
-			labelGCContentRef := "containerd.io/gc.ref.content"
 			walkFn := func(info content.Info) error {
 				var isRef = false
 				var labelStrings []string
 				for k, v := range info.Labels {
-					if strings.HasPrefix(k, labelGCContentRef) && v == string(dgst) {
+					if v == string(dgst) {
 						isRef = true
 					}
 					labelStrings = append(labelStrings, strings.Join([]string{k, v}, "="))
@@ -346,8 +345,8 @@ var (
 			snapshotSvc := client.SnapshotService(context.GlobalString("snapshotter"))
 			snapWalkFn := func (_ gocontext.Context, info snapshots.Info) error {
 				isRef := false
-				for k, v := range info.Labels {
-					if strings.HasPrefix(k, labelGCContentRef) && v == string(dgst) {
+				for _, v := range info.Labels {
+					if v == string(dgst) {
 						isRef = true
 						break
 					}
@@ -364,7 +363,7 @@ var (
 				return err
 			}
 
-			fmt.Printf("snapshots: %s\n", strings.Join(snapshotterRefs, ", "))
+			fmt.Printf("Snapshots: %s\n", strings.Join(snapshotterRefs, ", "))
 
 			// Sandbox
 			ss := client.SandboxStore()
@@ -376,8 +375,8 @@ var (
 			}
 
 			for _, sbox := range sandboxes {
-				for k, v := range sbox.Labels {
-					if strings.HasPrefix(k, labelGCContentRef) && v == string(dgst) {
+				for _, v := range sbox.Labels {
+					if v == string(dgst) {
 						sandboxRefs = append(sandboxRefs, sbox.ID)
 						break
 					}
@@ -396,8 +395,8 @@ var (
 			}
 
 			for _, container := range containerList {
-				for k, v := range container.Labels {
-					if strings.HasPrefix(k, labelGCContentRef) && v == string(dgst) {
+				for _, v := range container.Labels {
+					if v == string(dgst) {
 						containerRefs = append(containerRefs, container.ID)
 						break
 					}
