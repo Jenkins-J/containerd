@@ -290,21 +290,13 @@ var (
 
 			walkFn := func(info content.Info) error {
 				var isRef = false
-				//TODO: Remove labelStrings
-				var labelStrings []string
-				for k, v := range info.Labels {
+				for _, v := range info.Labels {
 					if v == string(dgst) {
 						isRef = true
+						break
 					}
-					labelStrings = append(labelStrings, strings.Join([]string{k, v}, "="))
 				}
 				if isRef {
-					sort.Strings(labelStrings)
-					labels := strings.Join(labelStrings, ",")
-					if labels == "" {
-						labels = "-"
-					}
-
 					ids = append(ids, string(info.Digest))
 				}
 				return nil
