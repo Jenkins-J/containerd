@@ -254,6 +254,11 @@ var (
 			}
 			defer cancel()
 
+			tw := tabwriter.NewWriter(os.Stdout, 1, 8, 1, '\t', 0)
+			defer tw.Flush()
+
+			fmt.Fprintln(tw, "TYPE\tID")
+
 			// Images
 			imgStore := client.ImageService()
 
@@ -275,7 +280,8 @@ var (
 				imgNames = append(imgNames, m.Name)
 			}
 
-			fmt.Printf("Images: %s\n", strings.Join(imgNames, ", "))
+			//fmt.Printf("Images: %s\n", strings.Join(imgNames, ", "))
+			fmt.Fprintf(tw, "%s\t%s\n", "Images", strings.Join(imgNames, ", "))
 
 			// Content
 			cs := client.ContentStore()
@@ -284,6 +290,7 @@ var (
 
 			walkFn := func(info content.Info) error {
 				var isRef = false
+				//TODO: Remove labelStrings
 				var labelStrings []string
 				for k, v := range info.Labels {
 					if v == string(dgst) {
@@ -309,7 +316,7 @@ var (
 				return err
 			}
 
-			fmt.Printf("Content: %s\n", strings.Join(ids, ", "))
+			fmt.Fprintf(tw, "%s\t%s\n", "Content", strings.Join(ids, ", "))
 
 			// Lease
 			leaseRefs := make([]string, 0)
@@ -338,7 +345,8 @@ var (
 				}
 			}
 
-			fmt.Printf("Leases: %s\n", strings.Join(leaseRefs, ", "))
+			//fmt.Printf("Leases: %s\n", strings.Join(leaseRefs, ", "))
+			fmt.Fprintf(tw, "%s\t%s\n", "Leases", strings.Join(leaseRefs, ", "))
 
 			// Snapshots
 			snapshotterRefs := make([]string, 0)
@@ -363,7 +371,8 @@ var (
 				return err
 			}
 
-			fmt.Printf("Snapshots: %s\n", strings.Join(snapshotterRefs, ", "))
+			//fmt.Printf("Snapshots: %s\n", strings.Join(snapshotterRefs, ", "))
+			fmt.Fprintf(tw, "%s\t%s\n", "Snapshots", strings.Join(snapshotterRefs, ", "))
 
 			// Sandbox
 			ss := client.SandboxStore()
@@ -383,7 +392,8 @@ var (
 				}
 			}
 
-			fmt.Printf("Sandboxes: %s\n", strings.Join(sandboxRefs, ", "))
+			//fmt.Printf("Sandboxes: %s\n", strings.Join(sandboxRefs, ", "))
+			fmt.Fprintf(tw, "%s\t%s\n", "Sandboxes", strings.Join(sandboxRefs, ", "))
 
 			// Container
 			containerSvc:= client.ContainerService()
@@ -403,7 +413,8 @@ var (
 				}
 			}
 
-			fmt.Printf("Containers: %s\n", strings.Join(containerRefs, ", "))
+			//fmt.Printf("Containers: %s\n", strings.Join(containerRefs, ", "))
+			fmt.Fprintf(tw, "%s\t%s\n", "Containers", strings.Join(containerRefs, ", "))
 
 			return nil
 		},
