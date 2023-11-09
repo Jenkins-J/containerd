@@ -280,7 +280,6 @@ var (
 				imgNames = append(imgNames, m.Name)
 			}
 
-			//fmt.Printf("Images: %s\n", strings.Join(imgNames, ", "))
 			fmt.Fprintf(tw, "%s\t%s\n", "Images", strings.Join(imgNames, ", "))
 
 			// Content
@@ -337,7 +336,6 @@ var (
 				}
 			}
 
-			//fmt.Printf("Leases: %s\n", strings.Join(leaseRefs, ", "))
 			fmt.Fprintf(tw, "%s\t%s\n", "Leases", strings.Join(leaseRefs, ", "))
 
 			// Snapshots
@@ -363,7 +361,6 @@ var (
 				return err
 			}
 
-			//fmt.Printf("Snapshots: %s\n", strings.Join(snapshotterRefs, ", "))
 			fmt.Fprintf(tw, "%s\t%s\n", "Snapshots", strings.Join(snapshotterRefs, ", "))
 
 			// Sandbox
@@ -384,7 +381,6 @@ var (
 				}
 			}
 
-			//fmt.Printf("Sandboxes: %s\n", strings.Join(sandboxRefs, ", "))
 			fmt.Fprintf(tw, "%s\t%s\n", "Sandboxes", strings.Join(sandboxRefs, ", "))
 
 			// Container
@@ -405,7 +401,6 @@ var (
 				}
 			}
 
-			//fmt.Printf("Containers: %s\n", strings.Join(containerRefs, ", "))
 			fmt.Fprintf(tw, "%s\t%s\n", "Containers", strings.Join(containerRefs, ", "))
 
 			return nil
