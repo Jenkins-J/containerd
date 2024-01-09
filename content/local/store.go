@@ -22,6 +22,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -30,6 +31,7 @@ import (
 	"github.com/containerd/containerd/v2/content"
 	"github.com/containerd/containerd/v2/errdefs"
 	"github.com/containerd/containerd/v2/filters"
+	"github.com/containerd/containerd/v2/pkg/fsverity"
 	"github.com/containerd/log"
 
 	"github.com/opencontainers/go-digest"
@@ -126,6 +128,39 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 	p, err := s.blobPath(desc.Digest)
 	if err != nil {
 		return nil, fmt.Errorf("calculating blob path for ReaderAt: %w", err)
+	}
+
+	log.G(ctx).Debugf("Getting reader for blob %v", p)
+
+	if runtime.GOOS == "linux" {
+		log.G(ctx).Debugf("verifying blob with fsverity")
+		// check that fsverity is enabled on the blob before reading
+		// if not, it may not be trustworthy
+		enabled, err := fsverity.IsEnabled(p)
+		if err != nil {
+			log.G(ctx).WithError(err).Errorf("Error checking fsverity status of blob %s: %s", p, err.Error())
+		}
+		if !enabled {
+			log.G(ctx).Warnf("fsverity not enabled on blob %s", p)
+		} else {
+			verityDigest, merr := fsverity.Measure(p)
+			if merr != nil {
+				log.G(ctx).WithField("blob", p).Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
+			} else {
+				log.G(ctx).Debugf("comparing measured digest to known good value")
+				// compare the digest to the "good" value stored in the blob label
+				blobInfo, err := s.Info(ctx, desc.Digest)
+				if err != nil {
+					log.G(ctx).Errorf("failed to retrieve good fsverity digest from store: %s", err.Error())
+				} else {
+					if verityDigest != blobInfo.Labels["fsverity_digest"] {
+						log.G(ctx).Errorf("fsverity digest does not match known good value, expected: %s; got: %s", blobInfo.Labels["fsverity_digest"], verityDigest)
+						log.G(ctx).Debugf("blob labels: %v", blobInfo.Labels)
+						return nil, fmt.Errorf("blob is not trusted, fsverity digest failed verification")
+					}
+				}
+			}
+		}
 	}
 
 	reader, err := OpenReader(p)
