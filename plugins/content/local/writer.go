@@ -32,6 +32,7 @@ import (
 
 	"github.com/containerd/containerd/v2/core/content"
 	"github.com/containerd/containerd/v2/internal/fsverity"
+	"github.com/containerd/containerd/v2/pkg/fsverity"
 )
 
 // writer represents a write transaction against the blob store.
@@ -141,10 +142,16 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 
 	// Enable content blob integrity verification if supported
 
-	if w.s.integritySupported {
+	var (
+		integritySupported bool
+		supportErr         error
+	)
+	if integritySupported, supportErr = fsverity.IsSupported(w.s.root); integritySupported {
 		if err := fsverity.Enable(target); err != nil {
-			log.G(ctx).Warnf("failed to enable integrity for blob %v: %s", target, err.Error())
+			log.G(ctx).Warnf("failed to enable integrity of blob %v: %s", target, err.Error())
 		}
+	} else {
+		log.G(ctx).WithError(supportErr).Debug("fsverity integrity verification is not supported")
 	}
 
 	// Ingest has now been made available in the content store, attempt to complete
