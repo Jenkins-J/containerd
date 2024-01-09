@@ -43,7 +43,10 @@ type fsverityDigest struct {
 	digest           [64]uint8
 }
 
-const maxDigestSize int = 64
+const (
+	maxDigestSize    int = 64
+	defaultBlockSize int = 4096
+)
 
 func IsEnabled(path string) (bool, error) {
 	f, err := os.OpenFile(path, os.O_RDONLY, 0644)
@@ -74,8 +77,12 @@ func Enable(path string) (bool, error) {
 	var args *fsverityEnableArg = &fsverityEnableArg{}
 	args.version = 1
 	args.hash_algorithm = 1
-	// TODO: change block size based on the system page size
-	args.block_size = 65536
+
+	blockSize := unix.Getpagesize()
+	if blockSize <= 0 {
+		blockSize = defaultBlockSize
+	}
+	args.block_size = blockSize
 
 	_, _, errno := unix.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(unix.FS_IOC_ENABLE_VERITY), uintptr(unsafe.Pointer(args)))
 	if errno != 0 {
