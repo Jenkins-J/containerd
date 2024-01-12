@@ -49,7 +49,7 @@ const (
 )
 
 func IsEnabled(path string) (bool, error) {
-	f, err := os.OpenFile(path, os.O_RDONLY, 0644)
+	f, err := os.Open(path)
 	if err != nil {
 		return false, fmt.Errorf("Error opening file: %s", err)
 	}
@@ -65,13 +65,13 @@ func IsEnabled(path string) (bool, error) {
 		return true, nil
 	}
 
-	return false, fmt.Errorf("File %s is not a verity file", path)
+	return false, nil
 }
 
-func Enable(path string) (bool, error) {
-	f, err := os.OpenFile(path, os.O_RDONLY, 0644)
+func Enable(path string) error {
+	f, err := os.Open(path)
 	if err != nil {
-		return false, fmt.Errorf("Error opening file: %s\n", err.Error())
+		return fmt.Errorf("Error opening file: %s\n", err.Error())
 	}
 
 	var args *fsverityEnableArg = &fsverityEnableArg{}
@@ -86,15 +86,15 @@ func Enable(path string) (bool, error) {
 
 	_, _, errno := unix.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(unix.FS_IOC_ENABLE_VERITY), uintptr(unsafe.Pointer(args)))
 	if errno != 0 {
-		return false, fmt.Errorf("Enable fsverity failed: %d\n", errno)
+		return fmt.Errorf("Enable fsverity failed: %d\n", errno)
 	}
 
-	return true, nil
+	return nil
 }
 
 func Measure(path string) (string, error) {
 	var verityDigest string
-	f, err := os.OpenFile(path, os.O_RDONLY, 0644)
+	f, err := os.Open(path)
 	if err != nil {
 		fmt.Printf("Error opening file: %s\n", err.Error())
 		return
