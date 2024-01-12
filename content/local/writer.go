@@ -137,6 +137,22 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 		return err
 	}
 
+	if runtime.GOOS == "linux" {
+		// Enable fsverity digest verification on the blob
+		if err := fsverity.Enable(target); err != nil {
+			log.G(ctx).WithField("ref", w.ref).Error("failed to enable fsverity verification")
+		} else {
+			verityDigest, merr := fsverity.Measure(target)
+			if merr != nil {
+				log.G(ctx).WithField("ref", w.ref).Error("failed to take fsverity measurement of blob")
+			} else {
+				// store the fsverity digest for later comparison
+				// TODO: create a better label for the fs verity digest
+				base.Labels["fsverity_digest"] = verityDigest
+			}
+		}
+	}
+
 	// Ingest has now been made available in the content store, attempt to complete
 	// setting metadata but errors should only be logged and not returned since
 	// the content store cannot be cleanly rolled back.

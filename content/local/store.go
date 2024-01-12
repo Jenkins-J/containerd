@@ -22,6 +22,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -126,6 +127,34 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 	p, err := s.blobPath(desc.Digest)
 	if err != nil {
 		return nil, fmt.Errorf("calculating blob path for ReaderAt: %w", err)
+	}
+
+	if runtime.GOOS == "linux" {
+		// check that fsverity is enabled on the blob before reading
+		// if not, it may not be trustworthy
+		enabled, err := fsverity.IsEnabled(p)
+		if err != nil {
+			log.G(ctx).WithError(err).Errorf("Error checking fsverity status: %s", p)
+		}
+		if !ok {
+			log.G(ctx).Warnf("fsverity not enabled on blob %s", p)
+		} else {
+			verityDigest, merr := fsverity.Measure(target)
+			if merr != nil {
+				log.G(ctx).WithField("ref", w.ref).Error("failed to take fsverity measurement of blob")
+			} else {
+				// compare the digest to the "good" value stored in the blob label
+				blobInfo, err := s.Info(ctx, desc.Digest)
+				if err != nil {
+					log.G(ctx).Error("failed to retrieve good fsverity digest from store")
+				} else {
+					if verityDigest != blobInfo.Labels["fsverity_digest"] {
+						log.G(ctx).Error("fsverity digest does not match known good value")
+						return nil, fmt.Errorf("blob is not trusted, fsverity digest failed verification")
+					}
+				}
+			}
+		}
 	}
 
 	reader, err := OpenReader(p)
