@@ -138,6 +138,7 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 	}
 
 	if runtime.GOOS == "linux" {
+		log.G(ctx).Debugf("enabling fsverity on blob")
 		// Enable fsverity digest verification on the blob
 		if err := fsverity.Enable(target); err != nil {
 			log.G(ctx).WithField("ref", w.ref).Error("failed to enable fsverity verification")
@@ -146,6 +147,7 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 			if merr != nil {
 				log.G(ctx).WithField("ref", w.ref).Error("failed to take fsverity measurement of blob")
 			} else {
+				log.G(ctx).Debugf("storing \"good\" digest value in metadata database")
 				// store the fsverity digest for later comparison
 				// TODO: create a better label for the fs verity digest
 				base.Labels["fsverity_digest"] = verityDigest

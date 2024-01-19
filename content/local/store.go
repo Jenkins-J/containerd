@@ -130,6 +130,7 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 	}
 
 	if runtime.GOOS == "linux" {
+		log.G(ctx).Debugf("verifying blob with fsverity")
 		// check that fsverity is enabled on the blob before reading
 		// if not, it may not be trustworthy
 		enabled, err := fsverity.IsEnabled(p)
@@ -143,6 +144,7 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 			if merr != nil {
 				log.G(ctx).WithField("ref", w.ref).Error("failed to take fsverity measurement of blob")
 			} else {
+				log.G(ctx).Debugf("comparing measured digest to known good value")
 				// compare the digest to the "good" value stored in the blob label
 				blobInfo, err := s.Info(ctx, desc.Digest)
 				if err != nil {
