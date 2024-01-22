@@ -31,6 +31,7 @@ import (
 	"github.com/containerd/containerd/v2/content"
 	"github.com/containerd/containerd/v2/errdefs"
 	"github.com/containerd/containerd/v2/filters"
+	"github.com/containerd/containerd/v2/pkg/fsverity"
 	"github.com/containerd/log"
 
 	"github.com/opencontainers/go-digest"
