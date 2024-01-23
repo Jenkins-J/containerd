@@ -136,23 +136,23 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 		// if not, it may not be trustworthy
 		enabled, err := fsverity.IsEnabled(p)
 		if err != nil {
-			log.G(ctx).WithError(err).Errorf("Error checking fsverity status: %s", p)
+			log.G(ctx).WithError(err).Errorf("Error checking fsverity status of blob %s: %s", p, err.Error())
 		}
 		if !enabled {
 			log.G(ctx).Warnf("fsverity not enabled on blob %s", p)
 		} else {
 			verityDigest, merr := fsverity.Measure(p)
 			if merr != nil {
-				log.G(ctx).WithField("blob", p).Error("failed to take fsverity measurement of blob")
+				log.G(ctx).WithField("blob", p).Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
 			} else {
 				log.G(ctx).Debugf("comparing measured digest to known good value")
 				// compare the digest to the "good" value stored in the blob label
 				blobInfo, err := s.Info(ctx, desc.Digest)
 				if err != nil {
-					log.G(ctx).Error("failed to retrieve good fsverity digest from store")
+					log.G(ctx).Errorf("failed to retrieve good fsverity digest from store: %s", err.Error())
 				} else {
 					if verityDigest != blobInfo.Labels["fsverity_digest"] {
-						log.G(ctx).Error("fsverity digest does not match known good value")
+						log.G(ctx).Errorf("fsverity digest does not match known good value, expected: %s; got: %s", blobInfo.Labels["fsverity_digest"], verityDigest)
 						return nil, fmt.Errorf("blob is not trusted, fsverity digest failed verification")
 					}
 				}

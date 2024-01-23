@@ -142,11 +142,11 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 		log.G(ctx).Debugf("enabling fsverity on blob")
 		// Enable fsverity digest verification on the blob
 		if err := fsverity.Enable(target); err != nil {
-			log.G(ctx).WithField("ref", w.ref).Error("failed to enable fsverity verification")
+			log.G(ctx).WithField("ref", w.ref).Errorf("failed to enable fsverity verification: %s", err.Error())
 		} else {
 			verityDigest, merr := fsverity.Measure(target)
 			if merr != nil {
-				log.G(ctx).WithField("ref", w.ref).Error("failed to take fsverity measurement of blob")
+				log.G(ctx).WithField("ref", w.ref).Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
 			} else {
 				log.G(ctx).Debugf("storing \"good\" digest value in metadata database")
 				// store the fsverity digest for later comparison
