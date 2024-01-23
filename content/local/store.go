@@ -130,6 +130,8 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 		return nil, fmt.Errorf("calculating blob path for ReaderAt: %w", err)
 	}
 
+	log.G(ctx).Debugf("Getting reader for blob %v", p)
+
 	if runtime.GOOS == "linux" {
 		log.G(ctx).Debugf("verifying blob with fsverity")
 		// check that fsverity is enabled on the blob before reading
@@ -153,6 +155,7 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 				} else {
 					if verityDigest != blobInfo.Labels["fsverity_digest"] {
 						log.G(ctx).Errorf("fsverity digest does not match known good value, expected: %s; got: %s", blobInfo.Labels["fsverity_digest"], verityDigest)
+						log.G(ctx).Debugf("blob labels: %v", blobInfo.Labels)
 						return nil, fmt.Errorf("blob is not trusted, fsverity digest failed verification")
 					}
 				}

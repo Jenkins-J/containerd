@@ -139,7 +139,7 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 	}
 
 	if runtime.GOOS == "linux" {
-		log.G(ctx).Debugf("enabling fsverity on blob")
+		log.G(ctx).Debugf("enabling fsverity on blob %v", target)
 		// Enable fsverity digest verification on the blob
 		if err := fsverity.Enable(target); err != nil {
 			log.G(ctx).WithField("ref", w.ref).Errorf("failed to enable fsverity verification: %s", err.Error())
