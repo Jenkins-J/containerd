@@ -85,8 +85,8 @@ func Enable(path string) error {
 
 	s := unix.Stat_t{}
 	serr := unix.Stat(path, &s)
-	if serr == nil && int(s.BlkSize) < blockSize {
-		blockSize = int(s.BlkSize)
+	if serr == nil && int(s.Blksize) < blockSize {
+		blockSize = int(s.Blksize)
 	}
 
 	if blockSize <= 0 {
