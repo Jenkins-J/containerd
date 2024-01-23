@@ -44,8 +44,8 @@ type fsverityDigest struct {
 }
 
 const (
-	maxDigestSize    int = 64
-	defaultBlockSize int = 4096
+	defaultBlockSize int    = 4096
+	maxDigestSize    uint16 = 64
 )
 
 func IsEnabled(path string) (bool, error) {
