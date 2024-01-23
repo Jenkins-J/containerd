@@ -151,6 +151,9 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 				log.G(ctx).Debugf("storing \"good\" digest value in metadata database")
 				// store the fsverity digest for later comparison
 				// TODO: create a better label for the fs verity digest
+				if base.Labels == nil {
+					base.Labels = make(map[string]string)
+				}
 				base.Labels["fsverity_digest"] = verityDigest
 			}
 		}
