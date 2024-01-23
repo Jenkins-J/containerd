@@ -44,8 +44,8 @@ type fsverityDigest struct {
 }
 
 const (
-	maxDigestSize    int = 64
-	defaultBlockSize int = 4096
+	maxDigestSize    uint16 = 64
+	defaultBlockSize uint32 = 4096
 )
 
 func IsEnabled(path string) (bool, error) {
@@ -96,8 +96,7 @@ func Measure(path string) (string, error) {
 	var verityDigest string
 	f, err := os.Open(path)
 	if err != nil {
-		fmt.Printf("Error opening file: %s\n", err.Error())
-		return
+		return verityDigest, fmt.Errorf("Error opening file: %s\n", err.Error())
 	}
 
 	var d *fsverityDigest = &fsverityDigest{digest_size: maxDigestSize}
