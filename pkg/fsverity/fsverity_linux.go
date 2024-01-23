@@ -78,10 +78,21 @@ func Enable(path string) error {
 	args.version = 1
 	args.hash_algorithm = 1
 
+	// fsverity block size should be the minimum between the page size
+	// and the file system block size
+	// If neither value is retrieved successfully, set fsverity block size to the default value
 	blockSize := unix.Getpagesize()
+
+	s := unix.Stat_t{}
+	serr := unix.Stat(path, &s)
+	if serr == nil && int(s.BlkSize) < blockSize {
+		blockSize = int(s.BlkSize)
+	}
+
 	if blockSize <= 0 {
 		blockSize = defaultBlockSize
 	}
+
 	args.block_size = uint32(blockSize)
 
 	_, _, errno := unix.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(unix.FS_IOC_ENABLE_VERITY), uintptr(unsafe.Pointer(args)))
