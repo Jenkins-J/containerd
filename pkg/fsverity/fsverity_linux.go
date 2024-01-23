@@ -44,8 +44,8 @@ type fsverityDigest struct {
 }
 
 const (
-	maxDigestSize    uint16 = 64
-	defaultBlockSize uint32 = 4096
+	maxDigestSize    int = 64
+	defaultBlockSize int = 4096
 )
 
 func IsEnabled(path string) (bool, error) {
@@ -82,7 +82,7 @@ func Enable(path string) error {
 	if blockSize <= 0 {
 		blockSize = defaultBlockSize
 	}
-	args.block_size = blockSize
+	args.block_size = uint32(blockSize)
 
 	_, _, errno := unix.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(unix.FS_IOC_ENABLE_VERITY), uintptr(unsafe.Pointer(args)))
 	if errno != 0 {
