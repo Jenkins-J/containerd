@@ -173,8 +173,8 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 		log.G(ctx).WithField("ref", w.ref).WithField("path", w.path).Error("failed to remove ingest directory")
 	}
 
+	log.G(ctx).Debugf("content labels: %v", base.Labels)
 	if w.s.ls != nil && base.Labels != nil {
-		log.G(ctx).Debugf("content labels: %v", base.Labels)
 		if err := w.s.ls.Set(dgst, base.Labels); err != nil {
 			log.G(ctx).WithField("digest", dgst).Error("failed to set labels")
 		}
