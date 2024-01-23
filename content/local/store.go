@@ -138,12 +138,12 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 		if err != nil {
 			log.G(ctx).WithError(err).Errorf("Error checking fsverity status: %s", p)
 		}
-		if !ok {
+		if !enabled {
 			log.G(ctx).Warnf("fsverity not enabled on blob %s", p)
 		} else {
-			verityDigest, merr := fsverity.Measure(target)
+			verityDigest, merr := fsverity.Measure(p)
 			if merr != nil {
-				log.G(ctx).WithField("ref", w.ref).Error("failed to take fsverity measurement of blob")
+				log.G(ctx).WithField("blob", p).Error("failed to take fsverity measurement of blob")
 			} else {
 				log.G(ctx).Debugf("comparing measured digest to known good value")
 				// compare the digest to the "good" value stored in the blob label
