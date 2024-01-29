@@ -150,17 +150,37 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 			} else {
 				log.G(ctx).Debugf("storing \"good\" digest value in metadata database")
 
-				// store the fsverity digest for later comparison
-				//
-				// TODO: find how to add content labels in the metadata database
-				// the 'content store' is not able to store labels on its own
-				//
-				// TODO: create a better label for the fs verity digest
-				// TODO: This does not work, fix it (see comment above)
-				if base.Labels == nil {
-					base.Labels = make(map[string]string)
+				integrityStore := filepath.Join(w.s.root, "integrity")
+				if err := os.MkdirAll(integrityStore, 0755); err != nil {
+					log.G(ctx).Debugf("error creating integrity digest directory: %s", err.Error())
+					return err
 				}
-				base.Labels["fsverity_digest"] = verityDigest
+
+				digestPath := filepath.Join(integrityStore, dgst.Encoded())
+				_, err := os.Stat(digestPath)
+				if err != nil {
+					if os.IsExist(err) {
+						log.G(ctx).Debugf("integrity digest for blob already exists")
+						return err
+					}
+				}
+
+				digestFile, err := os.Create(digestPath)
+				if err != nil {
+					if os.IsExist(err) {
+						log.G(ctx).Debugf("Error creating integrity digest file: digest for blob already exists")
+						return err
+					}
+
+					return fmt.Errorf("Error creating integrity digest file for blob: %s", dgst.Encoded())
+				}
+
+				_, err = digestFile.WriteString(verityDigest)
+				if err != nil {
+					log.G(ctx).Debugf("Error writing fsverity digest to file: %s", err)
+					return err
+				}
+
 			}
 		}
 	}

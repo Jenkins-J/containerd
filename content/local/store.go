@@ -148,16 +148,24 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 				log.G(ctx).WithField("blob", p).Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
 			} else {
 				log.G(ctx).Debugf("comparing measured digest to known good value")
+
 				// compare the digest to the "good" value stored in the blob label
-				blobInfo, err := s.Info(ctx, desc.Digest)
+				var expectedDigest string
+				integrityFile := filepath.Join(s.root, "integrity", desc.Digest.Encoded())
+				ifd, err := os.Open(integrityFile)
 				if err != nil {
-					log.G(ctx).Errorf("failed to retrieve good fsverity digest from store: %s", err.Error())
+					log.G(ctx).Errorf("failed to read integrity file of blob %s", p)
+					return nil, fmt.Errorf("could not read expected integrity value of %s", p)
+				}
+				b, err := io.ReadAll(ifd)
+				if err != nil {
+					log.G(ctx).Errorf("could not read fsverity digest from integrity file: %s", err.Error())
 				} else {
-					if verityDigest != blobInfo.Labels["fsverity_digest"] {
-						log.G(ctx).Errorf("fsverity digest does not match known good value, expected: %s; got: %s", blobInfo.Labels["fsverity_digest"], verityDigest)
-						log.G(ctx).Debugf("blob labels: %v", blobInfo.Labels)
-						return nil, fmt.Errorf("blob is not trusted, fsverity digest failed verification")
-					}
+					expectedDigest = string(b)
+				}
+				if verityDigest != expectedDigest {
+					log.G(ctx).Errorf("Error: fsverity digest does not match the expected digest")
+					return nil, fmt.Errorf("blob not trusted: fsverity digest does not match the expected digest value")
 				}
 			}
 		}
@@ -187,6 +195,15 @@ func (s *store) Delete(ctx context.Context, dgst digest.Digest) error {
 		}
 
 		return fmt.Errorf("content %v: %w", dgst, errdefs.ErrNotFound)
+	}
+
+	integrityFile := filepath.Join(s.root, "integrity", dgst.Encoded())
+	if err := os.RemoveAll(integrityFile); err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+
+		return fmt.Errorf("integrity file %v: %w", dgst, errdefs.ErrNotFound)
 	}
 
 	return nil
