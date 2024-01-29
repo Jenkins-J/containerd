@@ -157,7 +157,7 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 				}
 
 				digestPath := filepath.Join(integrityStore, dgst.Encoded())
-				digestInfo, err := os.Stat(digestPath)
+				_, err := os.Stat(digestPath)
 				if err != nil {
 					if os.IsExist(err) {
 						log.G(ctx).Debugf("integrity digest for blob already exists")
@@ -175,7 +175,7 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 					return fmt.Errorf("Error creating integrity digest file for blob: %s", dgst.Encoded())
 				}
 
-				_, err := digestFile.WriteString(verityDigest)
+				_, err = digestFile.WriteString(verityDigest)
 				if err != nil {
 					log.G(ctx).Debugf("Error writing fsverity digest to file: %s", err)
 					return err

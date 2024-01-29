@@ -152,7 +152,12 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 				// compare the digest to the "good" value stored in the blob label
 				var expectedDigest string
 				integrityFile := filepath.Join(s.root, "integrity", desc.Digest.Encoded())
-				b, err := io.ReadAll(integrityFile)
+				ifd, err := os.Open(integrityFile)
+				if err != nil {
+					log.G(ctx).Errorf("failed to read integrity file of blob %s", p)
+					return nil, fmt.Errorf("could not read expected integrity value of %s", p)
+				}
+				b, err := io.ReadAll(ifd)
 				if err != nil {
 					log.G(ctx).Errorf("could not read fsverity digest from integrity file: %s", err.Error())
 				} else {
