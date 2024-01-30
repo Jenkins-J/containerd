@@ -197,9 +197,9 @@ func (s *store) Delete(ctx context.Context, dgst digest.Digest) error {
 		return fmt.Errorf("content %v: %w", dgst, errdefs.ErrNotFound)
 	}
 
-	integrityFile := filepath.Join(s.root, "integrity", desc.Digest.Encoded())
+	integrityFile := filepath.Join(s.root, "integrity", dgst.Encoded())
 	if err := os.RemoveAll(integrityFile); err != nil {
-		if !osIsNotExist(err) {
+		if !os.IsNotExist(err) {
 			return err
 		}
 
