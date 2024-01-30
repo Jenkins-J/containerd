@@ -133,40 +133,49 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 	log.G(ctx).Debugf("Getting reader for blob %v", p)
 
 	if runtime.GOOS == "linux" {
-		log.G(ctx).Debugf("verifying blob with fsverity")
-		// check that fsverity is enabled on the blob before reading
-		// if not, it may not be trustworthy
-		enabled, err := fsverity.IsEnabled(p)
-		if err != nil {
-			log.G(ctx).WithError(err).Errorf("Error checking fsverity status of blob %s: %s", p, err.Error())
-		}
-		if !enabled {
-			log.G(ctx).Warnf("fsverity not enabled on blob %s", p)
-		} else {
+		measure := func() (string, error) {
+			var verityDigest string
+			log.G(ctx).Debugf("measuring blob: %s", p)
+			// check that fsverity is enabled on the blob before reading
+			// if not, it may not be trustworthy
+			enabled, err := fsverity.IsEnabled(p)
+			if err != nil {
+				return verityDigest, fmt.Errorf("Error checking fsverity status of blob %s: %s", p, err.Error())
+			}
+			if !enabled {
+				return verityDigest, fmt.Errorf("fsverity not enabled on blob %s", p)
+			}
 			verityDigest, merr := fsverity.Measure(p)
 			if merr != nil {
-				log.G(ctx).WithField("blob", p).Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
-			} else {
-				log.G(ctx).Debugf("comparing measured digest to known good value")
+				return verityDigest, fmt.Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
+			}
+			return verityDigest, nil
+		}
 
-				// compare the digest to the "good" value stored in the blob label
-				var expectedDigest string
-				integrityFile := filepath.Join(s.root, "integrity", desc.Digest.Encoded())
-				ifd, err := os.Open(integrityFile)
-				if err != nil {
-					log.G(ctx).Errorf("failed to read integrity file of blob %s", p)
-					return nil, fmt.Errorf("could not read expected integrity value of %s", p)
-				}
-				b, err := io.ReadAll(ifd)
-				if err != nil {
-					log.G(ctx).Errorf("could not read fsverity digest from integrity file: %s", err.Error())
-				} else {
-					expectedDigest = string(b)
-				}
-				if verityDigest != expectedDigest {
-					log.G(ctx).Errorf("Error: fsverity digest does not match the expected digest")
-					return nil, fmt.Errorf("blob not trusted: fsverity digest does not match the expected digest value")
-				}
+		log.G(ctx).Debugf("verifying blob with fsverity")
+		verityDigest, err := measure()
+		if err != nil {
+			log.G(ctx).WithField("blob", p).Errorf("failed to get integrity measurement: %s", err.Error())
+		} else {
+			var expectedDigest string
+			integrityFile := filepath.Join(s.root, "integrity", desc.Digest.Encoded())
+			ifd, err := os.Open(integrityFile)
+			if err != nil {
+				log.G(ctx).Errorf("failed to read integrity file of blob %s", p)
+				return nil, fmt.Errorf("could not read expected integrity value of %s", p)
+			}
+			b, err := io.ReadAll(ifd)
+			if err != nil {
+				log.G(ctx).Errorf("could not read fsverity digest from integrity file: %s", err.Error())
+			} else {
+				expectedDigest = string(b)
+			}
+
+			// compare the digest to the "good" value stored in the blob label
+			log.G(ctx).Debugf("comparing measured digest to known good value")
+			if verityDigest != expectedDigest {
+				log.G(ctx).Errorf("Error: fsverity digest does not match the expected digest")
+				return nil, fmt.Errorf("blob not trusted: fsverity digest does not match the expected digest value")
 			}
 		}
 	}
