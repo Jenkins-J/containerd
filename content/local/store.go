@@ -131,9 +131,13 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 	}
 
 	log.G(ctx).Debugf("Getting reader for blob %v", p)
+	measure := func() {
+		log.G(ctx).Debugf("measuring blob: %s", p)
+	}
 
 	if runtime.GOOS == "linux" {
 		log.G(ctx).Debugf("verifying blob with fsverity")
+		measure()
 		// check that fsverity is enabled on the blob before reading
 		// if not, it may not be trustworthy
 		enabled, err := fsverity.IsEnabled(p)
