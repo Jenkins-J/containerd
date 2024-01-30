@@ -139,48 +139,56 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 	}
 
 	if runtime.GOOS == "linux" {
-		log.G(ctx).Debugf("enabling fsverity on blob %v", target)
-		// Enable fsverity digest verification on the blob
-		if err := fsverity.Enable(target); err != nil {
-			log.G(ctx).WithField("ref", w.ref).Errorf("failed to enable fsverity verification: %s", err.Error())
-		} else {
+		enable := func() (string, error) {
+			var verityDigest string
+			log.G(ctx).Debugf("enabling fsverity on blob %v", target)
+			// Enable fsverity digest verification on the blob
+			if err := fsverity.Enable(target); err != nil {
+				return verityDigest, fmt.Errorf("failed to enable fsverity verification: %s", err.Error())
+			}
+
 			verityDigest, merr := fsverity.Measure(target)
 			if merr != nil {
-				log.G(ctx).WithField("ref", w.ref).Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
-			} else {
-				log.G(ctx).Debugf("storing \"good\" digest value in metadata database")
+				return verityDigest, fmt.Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
+			}
+			return verityDigest, nil
+		}
 
-				integrityStore := filepath.Join(w.s.root, "integrity")
-				if err := os.MkdirAll(integrityStore, 0755); err != nil {
-					log.G(ctx).Debugf("error creating integrity digest directory: %s", err.Error())
+		verityDigest, err := enable()
+		if err != nil {
+			log.G(ctx).Errorf("enabling fsverity on blob failed: %s", err.Error())
+		} else {
+			log.G(ctx).Debugf("storing \"good\" digest value in metadata database")
+
+			integrityStore := filepath.Join(w.s.root, "integrity")
+			if err := os.MkdirAll(integrityStore, 0755); err != nil {
+				log.G(ctx).Debugf("error creating integrity digest directory: %s", err.Error())
+				return err
+			}
+
+			digestPath := filepath.Join(integrityStore, dgst.Encoded())
+			_, err := os.Stat(digestPath)
+			if err != nil {
+				if os.IsExist(err) {
+					log.G(ctx).Debugf("integrity digest for blob already exists")
+					return err
+				}
+			}
+
+			digestFile, err := os.Create(digestPath)
+			if err != nil {
+				if os.IsExist(err) {
+					log.G(ctx).Debugf("Error creating integrity digest file: digest for blob already exists")
 					return err
 				}
 
-				digestPath := filepath.Join(integrityStore, dgst.Encoded())
-				_, err := os.Stat(digestPath)
-				if err != nil {
-					if os.IsExist(err) {
-						log.G(ctx).Debugf("integrity digest for blob already exists")
-						return err
-					}
-				}
+				return fmt.Errorf("Error creating integrity digest file for blob: %s", dgst.Encoded())
+			}
 
-				digestFile, err := os.Create(digestPath)
-				if err != nil {
-					if os.IsExist(err) {
-						log.G(ctx).Debugf("Error creating integrity digest file: digest for blob already exists")
-						return err
-					}
-
-					return fmt.Errorf("Error creating integrity digest file for blob: %s", dgst.Encoded())
-				}
-
-				_, err = digestFile.WriteString(verityDigest)
-				if err != nil {
-					log.G(ctx).Debugf("Error writing fsverity digest to file: %s", err)
-					return err
-				}
-
+			_, err = digestFile.WriteString(verityDigest)
+			if err != nil {
+				log.G(ctx).Debugf("Error writing fsverity digest to file: %s", err)
+				return err
 			}
 		}
 	}
