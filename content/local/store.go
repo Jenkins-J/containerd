@@ -131,26 +131,27 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 	}
 
 	log.G(ctx).Debugf("Getting reader for blob %v", p)
-	measure := func() (string, error) {
-		var verityDigest string
-		log.G(ctx).Debugf("measuring blob: %s", p)
-		// check that fsverity is enabled on the blob before reading
-		// if not, it may not be trustworthy
-		enabled, err := fsverity.IsEnabled(p)
-		if err != nil {
-			return verityDigest, fmt.Errorf("Error checking fsverity status of blob %s: %s", p, err.Error())
-		}
-		if !enabled {
-			return verityDigest, fmt.Errorf("fsverity not enabled on blob %s", p)
-		}
-		verityDigest, merr := fsverity.Measure(p)
-		if merr != nil {
-			return verityDigest, fmt.Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
-		}
-		return verityDigest, nil
-	}
 
 	if runtime.GOOS == "linux" {
+		measure := func() (string, error) {
+			var verityDigest string
+			log.G(ctx).Debugf("measuring blob: %s", p)
+			// check that fsverity is enabled on the blob before reading
+			// if not, it may not be trustworthy
+			enabled, err := fsverity.IsEnabled(p)
+			if err != nil {
+				return verityDigest, fmt.Errorf("Error checking fsverity status of blob %s: %s", p, err.Error())
+			}
+			if !enabled {
+				return verityDigest, fmt.Errorf("fsverity not enabled on blob %s", p)
+			}
+			verityDigest, merr := fsverity.Measure(p)
+			if merr != nil {
+				return verityDigest, fmt.Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
+			}
+			return verityDigest, nil
+		}
+
 		log.G(ctx).Debugf("verifying blob with fsverity")
 		verityDigest, err := measure()
 		if err != nil {
