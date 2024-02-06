@@ -81,6 +81,7 @@ func parseRelease(release string) (*KernelVersion, error) {
 // that 3.12.25-gentoo and 3.12-1-amd64 are considered equal (kernel: 3, major: 12).
 func GreaterEqualThan(minVersion KernelVersion) (bool, error) {
 	kv, err := getKernelVersion()
+	fmt.Printf("comparing kv: %+v to target: %+v\n", kv, minVersion)
 	if err != nil {
 		return false, err
 	}

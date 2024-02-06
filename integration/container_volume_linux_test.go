@@ -134,6 +134,7 @@ func testReadonlyMounts(t *testing.T, mode string, expectRRO bool) {
 
 func TestReadonlyMounts(t *testing.T) {
 	kernelSupportsRRO, err := kernelversion.GreaterEqualThan(kernelversion.KernelVersion{Kernel: 5, Major: 12})
+	t.Logf("Supports RRO: %t\n", kernelSupportsRRO)
 	require.NoError(t, err)
 	t.Run("Default", func(t *testing.T) {
 		testReadonlyMounts(t, "", kernelSupportsRRO)
