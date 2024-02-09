@@ -22,7 +22,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -132,7 +131,7 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 
 	log.G(ctx).Debugf("Getting reader for blob %v", p)
 
-	if runtime.GOOS == "linux" {
+	if fsverity.IsSupported() {
 		measure := func() (string, error) {
 			var verityDigest string
 			log.G(ctx).Debugf("measuring blob: %s", p)
