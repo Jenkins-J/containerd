@@ -1,3 +1,5 @@
+//go:build linux
+
 /*
    Copyright The containerd Authors.
 
@@ -47,6 +49,10 @@ const (
 	defaultBlockSize int    = 4096
 	maxDigestSize    uint16 = 64
 )
+
+func IsSupported() bool {
+	return true
+}
 
 func IsEnabled(path string) (bool, error) {
 	f, err := os.Open(path)

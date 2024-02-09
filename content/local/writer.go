@@ -138,7 +138,7 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 		return err
 	}
 
-	if runtime.GOOS == "linux" {
+	if fsverity.IsSupported() {
 		enable := func() (string, error) {
 			var verityDigest string
 			log.G(ctx).Debugf("enabling fsverity on blob %v", target)
