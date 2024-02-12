@@ -158,7 +158,7 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 		if err != nil {
 			log.G(ctx).Errorf("enabling fsverity on blob failed: %s", err.Error())
 		} else {
-			log.G(ctx).Debugf("storing \"good\" digest value in metadata database")
+			log.G(ctx).Debugf("storing \"good\" digest value")
 
 			integrityStore := filepath.Join(w.s.root, "integrity")
 			if err := os.MkdirAll(integrityStore, 0755); err != nil {
