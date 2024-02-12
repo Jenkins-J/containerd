@@ -131,7 +131,7 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 
 	log.G(ctx).Debugf("Getting reader for blob %v", p)
 	if err = storeIntegrity(s.root, p, desc); err != nil {
-		log.G(ctx).Errorf("error storing integrity value of blob %v: %s", p, err)
+		log.G(ctx).Errorf("error storing integrity value of blob %v: %s", p, err.Error())
 	}
 
 	reader, err := OpenReader(p)
