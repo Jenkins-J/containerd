@@ -706,10 +706,7 @@ func storeIntegrity(rootPath string, p string, desc ocispec.Descriptor) error {
 		return fmt.Errorf("integrity validation is not supported")
 	}
 
-	log.G(ctx).Debugf("verifying blob with fsverity")
-
 	var verityDigest string
-	log.G(ctx).Debugf("measuring blob: %s", p)
 	verityDigest, merr := fsverity.Measure(p)
 	if merr != nil {
 		return fmt.Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
@@ -719,20 +716,17 @@ func storeIntegrity(rootPath string, p string, desc ocispec.Descriptor) error {
 	integrityFile := filepath.Join(rootPath, "integrity", desc.Digest.Encoded())
 	ifd, err := os.Open(integrityFile)
 	if err != nil {
-		log.G(ctx).Errorf("failed to read integrity file of blob %s", p)
 		return fmt.Errorf("could not read expected integrity value of %s", p)
 	}
 	b, err := io.ReadAll(ifd)
 	if err != nil {
-		log.G(ctx).Errorf("could not read fsverity digest from integrity file: %s", err.Error())
+		return fmt.Errorf("could not read fsverity digest from integrity file: %s", err.Error())
 	} else {
 		expectedDigest = string(b)
 	}
 
 	// compare the digest to the "good" value stored in the blob label
-	log.G(ctx).Debugf("comparing measured digest to known good value")
 	if verityDigest != expectedDigest {
-		log.G(ctx).Errorf("Error: fsverity digest does not match the expected digest")
 		return fmt.Errorf("blob not trusted: fsverity digest does not match the expected digest value")
 	}
 
