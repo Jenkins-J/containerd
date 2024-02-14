@@ -2,6 +2,6 @@
 
 package fsverity
 
-func IsSupported() bool {
-	return false
+func IsSupported(_ string) (bool, error) {
+	return false, nil
 }

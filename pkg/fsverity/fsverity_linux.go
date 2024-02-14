@@ -51,6 +51,7 @@ const (
 	maxDigestSize    uint16 = 64
 )
 
+// IsSupported ensures that fsverity is enabled on the filesystem where the content blobs are stored.
 func IsSupported(rootPath string) (bool, error) {
 	integrityStore := filepath.Join(rootPath, "integrity")
 	if err := os.MkdirAll(integrityStore, 0755); err != nil {
