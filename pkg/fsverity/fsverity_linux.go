@@ -58,13 +58,14 @@ func IsSupported(rootPath string) (bool, error) {
 	}
 
 	digestPath := filepath.Join(integrityStore, "supported")
-	_, err := os.Create(digestPath)
+	digestFile, err := os.Create(digestPath)
 	if err != nil {
 		if os.IsExist(err) {
 			return false, fmt.Errorf("error creating integrity digest file: %s", err)
 		}
 		return false, fmt.Errorf("error creating integrity digest file")
 	}
+	digestFile.Close()
 	defer os.Remove(digestPath)
 
 	eerr := Enable(digestPath)

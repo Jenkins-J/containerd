@@ -139,7 +139,7 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 	}
 
 	if err = storeIntegrity(w.s.root, target, dgst); err != nil {
-		log.G(ctx).Errorf("failed to validate integrity of blob %v: %s", target, err.Error())
+		log.G(ctx).Errorf("failed to store integrity of blob %v: %s", target, err.Error())
 	}
 
 	// Ingest has now been made available in the content store, attempt to complete
