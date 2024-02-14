@@ -21,6 +21,7 @@ package fsverity
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"syscall"
 	"unsafe"
 
@@ -50,8 +51,28 @@ const (
 	maxDigestSize    uint16 = 64
 )
 
-func IsSupported() bool {
-	return true
+func IsSupported(rootPath string) (bool, error) {
+	integrityStore := filepath.Join(rootPath, "integrity")
+	if err := os.MkdirAll(integrityStore, 0755); err != nil {
+		return false, fmt.Errorf("error creating integrity digest directory: %s", err.Error())
+	}
+
+	digestPath := filepath.Join(integrityStore, "supported")
+	_, err := os.Create(digestPath)
+	if err != nil {
+		if os.IsExist(err) {
+			return false, fmt.Errorf("error creating integrity digest file: %s", err)
+		}
+		return false, fmt.Errorf("error creating integrity digest file")
+	}
+	defer os.Remove(digestPath)
+
+	eerr := Enable(digestPath)
+	if eerr != nil {
+		return false, fmt.Errorf("fsverity not supported: %s", eerr.Error())
+	}
+
+	return true, nil
 }
 
 func IsEnabled(path string) (bool, error) {

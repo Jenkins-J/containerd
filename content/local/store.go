@@ -130,7 +130,7 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 	}
 
 	log.G(ctx).Debugf("Getting reader for blob %v", p)
-	if err = storeIntegrity(s.root, p, desc); err != nil {
+	if err = validateIntegrity(s.root, p, desc); err != nil {
 		log.G(ctx).Errorf("error storing integrity value of blob %v: %s", p, err.Error())
 	}
 
@@ -700,10 +700,10 @@ func writeToCompletion(path string, data []byte, mode os.FileMode) error {
 	return nil
 }
 
-func storeIntegrity(rootPath string, p string, desc ocispec.Descriptor) error {
+func validateIntegrity(rootPath string, p string, desc ocispec.Descriptor) error {
 	// validate the integrity of the blob if integrity validation is supported
-	if !fsverity.IsSupported() {
-		return fmt.Errorf("integrity validation is not supported")
+	if supported, err := fsverity.IsSupported(rootPath); !supported {
+		return fmt.Errorf("integrity validation is not supported: %s", err.Error())
 	}
 
 	var verityDigest string

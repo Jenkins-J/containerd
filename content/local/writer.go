@@ -138,7 +138,7 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 		return err
 	}
 
-	if err = validateIntegrity(w.s.root, target, dgst); err != nil {
+	if err = storeIntegrity(w.s.root, target, dgst); err != nil {
 		log.G(ctx).Errorf("failed to validate integrity of blob %v: %s", target, err.Error())
 	}
 
@@ -213,9 +213,9 @@ func (w *writer) Truncate(size int64) error {
 	return w.fp.Truncate(0)
 }
 
-func validateIntegrity(rootPath string, target string, dgst digest.Digest) error {
-	if !fsverity.IsSupported() {
-		return fmt.Errorf("integrity validation is not supported")
+func storeIntegrity(rootPath string, target string, dgst digest.Digest) error {
+	if supported, err := fsverity.IsSupported(rootPath); !supported {
+		return fmt.Errorf("integrity validation is not supported: %s", err.Error())
 	}
 
 	var verityDigest string
@@ -244,7 +244,7 @@ func validateIntegrity(rootPath string, target string, dgst digest.Digest) error
 	digestFile, err := os.Create(digestPath)
 	if err != nil {
 		if os.IsExist(err) {
-			return fmt.Errorf("error createing integrity digest file: %s", err)
+			return fmt.Errorf("error creating integrity digest file: %s", err)
 		}
 
 		return fmt.Errorf("Error creating integrity digest file for blob: %s", dgst.Encoded())
