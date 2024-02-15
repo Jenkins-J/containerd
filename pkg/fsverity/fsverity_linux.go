@@ -20,11 +20,12 @@ package fsverity
 
 import (
 	"fmt"
-	"github.com/containerd/containerd/v2/contrib/seccomp/kernelversion"
 	"os"
+	"sync"
 	"syscall"
 	"unsafe"
 
+	"github.com/containerd/containerd/v2/contrib/seccomp/kernelversion"
 	"golang.org/x/sys/unix"
 )
 
@@ -51,13 +52,20 @@ const (
 	maxDigestSize    uint16 = 64
 )
 
-// TODO: Use once to set a constant instead???
+var (
+	once sync.Once
+	supported bool
+)
+
 func IsSupported() bool {
-	minKernelVersion := kernelversion.KernelVersion{Kernel: 5, Major: 4}
-	supported, err := kernelversion.GreaterEqualThan(minKernelVersion)
-	if err != nil {
-		return false
-	}
+	once.Do(func () {
+		minKernelVersion := kernelversion.KernelVersion{Kernel: 5, Major: 4}
+		s, err := kernelversion.GreaterEqualThan(minKernelVersion)
+		if err != nil {
+			supported = false
+		}
+		supported = s
+	})
 	return supported
 }
 
