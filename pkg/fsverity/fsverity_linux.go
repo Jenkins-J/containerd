@@ -20,8 +20,8 @@ package fsverity
 
 import (
 	"fmt"
+	"github.com/containerd/containerd/v2/contrib/seccomp/kernelversion"
 	"os"
-	"path/filepath"
 	"syscall"
 	"unsafe"
 
@@ -51,30 +51,14 @@ const (
 	maxDigestSize    uint16 = 64
 )
 
-// IsSupported ensures that fsverity is enabled on the filesystem where the content blobs are stored.
-func IsSupported(rootPath string) (bool, error) {
-	integrityStore := filepath.Join(rootPath, "integrity")
-	if err := os.MkdirAll(integrityStore, 0755); err != nil {
-		return false, fmt.Errorf("error creating integrity digest directory: %s", err.Error())
-	}
-
-	digestPath := filepath.Join(integrityStore, "supported")
-	digestFile, err := os.Create(digestPath)
+// TODO: Use once to set a constant instead???
+func IsSupported() bool {
+	minKernelVersion := kernelversion.KernelVersion{Kernel: 5, Major: 4}
+	supported, err := kernelversion.GreaterEqualThan(minKernelVersion)
 	if err != nil {
-		if os.IsExist(err) {
-			return false, fmt.Errorf("error creating integrity digest file: %s", err)
-		}
-		return false, fmt.Errorf("error creating integrity digest file")
+		return false
 	}
-	digestFile.Close()
-	defer os.Remove(digestPath)
-
-	eerr := Enable(digestPath)
-	if eerr != nil {
-		return false, fmt.Errorf("fsverity not supported: %s", eerr.Error())
-	}
-
-	return true, nil
+	return supported
 }
 
 func IsEnabled(path string) (bool, error) {

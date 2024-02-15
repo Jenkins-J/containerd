@@ -702,8 +702,8 @@ func writeToCompletion(path string, data []byte, mode os.FileMode) error {
 
 func validateIntegrity(rootPath string, p string, desc ocispec.Descriptor) error {
 	// validate the integrity of the blob if integrity validation is supported
-	if supported, err := fsverity.IsSupported(rootPath); !supported {
-		return fmt.Errorf("integrity validation is not supported: %s", err.Error())
+	if supported := fsverity.IsSupported(); !supported {
+		return fmt.Errorf("integrity validation is not supported")
 	}
 
 	var verityDigest string

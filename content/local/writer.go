@@ -214,8 +214,8 @@ func (w *writer) Truncate(size int64) error {
 }
 
 func storeIntegrity(rootPath string, target string, dgst digest.Digest) error {
-	if supported, err := fsverity.IsSupported(rootPath); !supported {
-		return fmt.Errorf("integrity validation is not supported: %s", err.Error())
+	if supported := fsverity.IsSupported(); !supported {
+		return fmt.Errorf("integrity validation is not supported")
 	}
 
 	var verityDigest string
