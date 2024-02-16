@@ -74,11 +74,12 @@ func IsSupported(rootPath string) bool {
 		}
 
 		digestPath := filepath.Join(integrityStore, "supported")
-		_, err = os.Create(digestPath)
+		digestFile, err := os.Create(digestPath)
 		if err != nil {
 			supported = false
 			return
 		}
+		digestFile.Close()
 		defer os.Remove(digestPath)
 
 		eerr := Enable(digestPath)
