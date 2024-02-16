@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/v2/core/content"
+	"github.com/containerd/containerd/v2/pkg/fsverity"
 	"github.com/containerd/errdefs"
 	"github.com/containerd/log"
 	"github.com/opencontainers/go-digest"
@@ -137,6 +138,16 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 		return err
 	}
 
+	// Enable content blob integrity verification if supported
+
+	if integritySupported := fsverity.IsSupported(w.s.root); integritySupported {
+		if err := fsverity.Enable(target); err != nil {
+			log.G(ctx).Warnf("failed to enable integrity of blob %v: %s", target, err.Error())
+		}
+	} else {
+		log.G(ctx).Warnf("fsverity integrity verification is not supported")
+	}
+
 	// Ingest has now been made available in the content store, attempt to complete
 	// setting metadata but errors should only be logged and not returned since
 	// the content store cannot be cleanly rolled back.
@@ -151,7 +162,6 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 		log.G(ctx).WithField("ref", w.ref).WithField("path", w.path).Error("failed to remove ingest directory")
 	}
 
-	log.G(ctx).Debugf("content labels: %v", base.Labels)
 	if w.s.ls != nil && base.Labels != nil {
 		if err := w.s.ls.Set(dgst, base.Labels); err != nil {
 			log.G(ctx).WithField("digest", dgst).Error("failed to set labels")
