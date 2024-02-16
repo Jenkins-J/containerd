@@ -27,8 +27,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/containerd/v2/content"
-	"github.com/containerd/containerd/v2/filters"
+	"github.com/containerd/containerd/v2/core/content"
+	"github.com/containerd/containerd/v2/pkg/filters"
 	"github.com/containerd/containerd/v2/pkg/fsverity"
 	"github.com/containerd/errdefs"
 	"github.com/containerd/log"
@@ -702,7 +702,7 @@ func writeToCompletion(path string, data []byte, mode os.FileMode) error {
 
 func validateIntegrity(rootPath string, p string, desc ocispec.Descriptor) error {
 	// validate the integrity of the blob if integrity validation is supported
-	if supported := fsverity.IsSupported(); !supported {
+	if supported := fsverity.IsSupported(rootPath); !supported {
 		return fmt.Errorf("integrity validation is not supported")
 	}
 

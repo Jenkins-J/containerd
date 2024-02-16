@@ -2,6 +2,6 @@
 
 package fsverity
 
-func IsSupported() bool {
+func IsSupported(rootPath string) bool {
 	return false
 }
