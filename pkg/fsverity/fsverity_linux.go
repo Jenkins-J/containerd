@@ -31,19 +31,19 @@ import (
 
 type fsverityEnableArg struct {
 	version        uint32
-	hash_algorithm uint32
-	block_size     uint32
-	salt_size      uint32
-	salt_ptr       uint64
-	sig_size       uint32
+	hashAlgorithm uint32
+	blockSize     uint32
+	saltSize      uint32
+	saltPtr       uint64
+	sigSize       uint32
 	reserved1      uint32
-	sig_ptr        uint64
+	sigPtr        uint64
 	reserved2      [11]uint64
 }
 
 type fsverityDigest struct {
-	digest_algorithm uint16
-	digest_size      uint16
+	digestAlgorithm uint16
+	digestSize      uint16
 	digest           [64]uint8
 }
 
@@ -97,7 +97,7 @@ func Enable(path string) error {
 
 	var args *fsverityEnableArg = &fsverityEnableArg{}
 	args.version = 1
-	args.hash_algorithm = 1
+	args.hashAlgorithm = 1
 
 	// fsverity block size should be the minimum between the page size
 	// and the file system block size
@@ -114,7 +114,7 @@ func Enable(path string) error {
 		blockSize = defaultBlockSize
 	}
 
-	args.block_size = uint32(blockSize)
+	args.blockSize = uint32(blockSize)
 
 	_, _, errno := unix.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(unix.FS_IOC_ENABLE_VERITY), uintptr(unsafe.Pointer(args)))
 	if errno != 0 {
@@ -131,14 +131,14 @@ func Measure(path string) (string, error) {
 		return verityDigest, fmt.Errorf("Error opening file: %s\n", err.Error())
 	}
 
-	var d *fsverityDigest = &fsverityDigest{digest_size: maxDigestSize}
+	var d *fsverityDigest = &fsverityDigest{digestSize: maxDigestSize}
 	_, _, errno := unix.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(unix.FS_IOC_MEASURE_VERITY), uintptr(unsafe.Pointer(d)))
 	if errno != 0 {
 		return verityDigest, fmt.Errorf("Measure fsverity failed: %d\n", errno)
 	}
 
 	var i uint16
-	for i = 0; i < (*d).digest_size; i++ {
+	for i = 0; i < (*d).digestSize; i++ {
 		verityDigest = fmt.Sprintf("%s%x", verityDigest, (*d).digest[i])
 	}
 
