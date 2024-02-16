@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/v2/core/content"
+	"github.com/containerd/containerd/v2/pkg/fsverity"
 	"github.com/containerd/errdefs"
 	"github.com/containerd/log"
 	"github.com/opencontainers/go-digest"
@@ -135,6 +136,16 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 
 	if err := os.Rename(ingest, target); err != nil {
 		return err
+	}
+
+	// Enable content blob integrity verification if supported
+
+	if integritySupported := fsverity.IsSupported(w.s.root); integritySupported {
+		if err := fsverity.Enable(target); err != nil {
+			log.G(ctx).Warnf("failed to enable integrity of blob %v: %s", target, err.Error())
+		}
+	} else {
+		log.G(ctx).Warnf("fsverity integrity verification is not supported")
 	}
 
 	// Ingest has now been made available in the content store, attempt to complete

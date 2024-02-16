@@ -27,8 +27,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/containerd/v2/content"
-	"github.com/containerd/containerd/v2/filters"
+	"github.com/containerd/containerd/v2/core/content"
+	"github.com/containerd/containerd/v2/pkg/filters"
 	"github.com/containerd/errdefs"
 	"github.com/containerd/log"
 
@@ -127,8 +127,6 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 	if err != nil {
 		return nil, fmt.Errorf("calculating blob path for ReaderAt: %w", err)
 	}
-
-	log.G(ctx).Debugf("Getting reader for blob %v", p)
 
 	reader, err := OpenReader(p)
 	if err != nil {

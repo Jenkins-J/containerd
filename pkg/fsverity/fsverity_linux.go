@@ -21,30 +21,31 @@ package fsverity
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 	"syscall"
 	"unsafe"
 
-	"github.com/containerd/containerd/v2/contrib/seccomp/kernelversion"
+	"github.com/containerd/containerd/v2/pkg/kernelversion"
 	"golang.org/x/sys/unix"
 )
 
 type fsverityEnableArg struct {
-	version        uint32
-	hash_algorithm uint32
-	block_size     uint32
-	salt_size      uint32
-	salt_ptr       uint64
-	sig_size       uint32
-	reserved1      uint32
-	sig_ptr        uint64
-	reserved2      [11]uint64
+	version       uint32
+	hashAlgorithm uint32
+	blockSize     uint32
+	saltSize      uint32
+	saltPtr       uint64
+	sigSize       uint32
+	reserved1     uint32
+	sigPtr        uint64
+	reserved2     [11]uint64
 }
 
 type fsverityDigest struct {
-	digest_algorithm uint16
-	digest_size      uint16
-	digest           [64]uint8
+	digestAlgorithm uint16
+	digestSize      uint16
+	digest          [64]uint8
 }
 
 const (
@@ -53,18 +54,42 @@ const (
 )
 
 var (
-	once sync.Once
+	once      sync.Once
 	supported bool
 )
 
-func IsSupported() bool {
-	once.Do(func () {
+func IsSupported(rootPath string) bool {
+	once.Do(func() {
 		minKernelVersion := kernelversion.KernelVersion{Kernel: 5, Major: 4}
 		s, err := kernelversion.GreaterEqualThan(minKernelVersion)
 		if err != nil {
-			supported = false
+			supported = s
+			return
 		}
-		supported = s
+
+		integrityDir := filepath.Join(rootPath, "integrity")
+		if err = os.MkdirAll(integrityDir, 0755); err != nil {
+			supported = false
+			return
+		}
+
+		digestPath := filepath.Join(integrityDir, "supported")
+		digestFile, err := os.Create(digestPath)
+		if err != nil {
+			supported = false
+			return
+		}
+
+		digestFile.Close()
+		defer os.RemoveAll(integrityDir)
+
+		eerr := Enable(digestPath)
+		if eerr != nil {
+			supported = false
+			return
+		}
+
+		supported = true
 	})
 	return supported
 }
@@ -97,7 +122,7 @@ func Enable(path string) error {
 
 	var args *fsverityEnableArg = &fsverityEnableArg{}
 	args.version = 1
-	args.hash_algorithm = 1
+	args.hashAlgorithm = 1
 
 	// fsverity block size should be the minimum between the page size
 	// and the file system block size
@@ -114,7 +139,7 @@ func Enable(path string) error {
 		blockSize = defaultBlockSize
 	}
 
-	args.block_size = uint32(blockSize)
+	args.blockSize = uint32(blockSize)
 
 	_, _, errno := unix.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(unix.FS_IOC_ENABLE_VERITY), uintptr(unsafe.Pointer(args)))
 	if errno != 0 {
@@ -122,25 +147,4 @@ func Enable(path string) error {
 	}
 
 	return nil
-}
-
-func Measure(path string) (string, error) {
-	var verityDigest string
-	f, err := os.Open(path)
-	if err != nil {
-		return verityDigest, fmt.Errorf("Error opening file: %s\n", err.Error())
-	}
-
-	var d *fsverityDigest = &fsverityDigest{digest_size: maxDigestSize}
-	_, _, errno := unix.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(unix.FS_IOC_MEASURE_VERITY), uintptr(unsafe.Pointer(d)))
-	if errno != 0 {
-		return verityDigest, fmt.Errorf("Measure fsverity failed: %d\n", errno)
-	}
-
-	var i uint16
-	for i = 0; i < (*d).digest_size; i++ {
-		verityDigest = fmt.Sprintf("%s%x", verityDigest, (*d).digest[i])
-	}
-
-	return verityDigest, nil
 }
