@@ -21,6 +21,7 @@ package fsverity
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 	"syscall"
 	"unsafe"
@@ -30,21 +31,21 @@ import (
 )
 
 type fsverityEnableArg struct {
-	version        uint32
+	version       uint32
 	hashAlgorithm uint32
 	blockSize     uint32
 	saltSize      uint32
 	saltPtr       uint64
 	sigSize       uint32
-	reserved1      uint32
+	reserved1     uint32
 	sigPtr        uint64
-	reserved2      [11]uint64
+	reserved2     [11]uint64
 }
 
 type fsverityDigest struct {
 	digestAlgorithm uint16
 	digestSize      uint16
-	digest           [64]uint8
+	digest          [64]uint8
 }
 
 const (
@@ -53,18 +54,42 @@ const (
 )
 
 var (
-	once sync.Once
+	once      sync.Once
 	supported bool
 )
 
-func IsSupported() bool {
-	once.Do(func () {
+func IsSupported(rootPath string) bool {
+	once.Do(func() {
 		minKernelVersion := kernelversion.KernelVersion{Kernel: 5, Major: 4}
 		s, err := kernelversion.GreaterEqualThan(minKernelVersion)
 		if err != nil {
-			supported = false
+			supported = s
+			return
 		}
-		supported = s
+
+		integrityStore := filepath.Join(rootPath, "integrity")
+		if err = os.MkdirAll(integrityStore, 0755); err != nil {
+			supported = false
+			return
+		}
+
+		digestPath := filepath.Join(integrityStore, "supported")
+		digestFile, err := os.Create(digestPath)
+		if err != nil {
+			supported = false
+			return
+		}
+
+		digestFile.Close()
+		defer os.Remove(digestPath)
+
+		eerr := Enable(digestPath)
+		if eerr != nil {
+			supported = false
+			return
+		}
+
+		supported = true
 	})
 	return supported
 }
