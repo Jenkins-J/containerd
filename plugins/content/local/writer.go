@@ -27,7 +27,6 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/v2/core/content"
-	"github.com/containerd/containerd/v2/pkg/fsverity"
 	"github.com/containerd/errdefs"
 	"github.com/containerd/log"
 	"github.com/opencontainers/go-digest"
@@ -136,33 +135,6 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 
 	if err := os.Rename(ingest, target); err != nil {
 		return err
-	}
-
-	if runtime.GOOS == "linux" {
-		log.G(ctx).Debugf("enabling fsverity on blob %v", target)
-		// Enable fsverity digest verification on the blob
-		if err := fsverity.Enable(target); err != nil {
-			log.G(ctx).WithField("ref", w.ref).Errorf("failed to enable fsverity verification: %s", err.Error())
-		} else {
-			verityDigest, merr := fsverity.Measure(target)
-			if merr != nil {
-				log.G(ctx).WithField("ref", w.ref).Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
-			} else {
-				log.G(ctx).Debugf("storing \"good\" digest value in metadata database")
-
-				// store the fsverity digest for later comparison
-				//
-				// TODO: find how to add content labels in the metadata database
-				// the 'content store' is not able to store labels on its own
-				//
-				// TODO: create a better label for the fs verity digest
-				// TODO: This does not work, fix it (see comment above)
-				if base.Labels == nil {
-					base.Labels = make(map[string]string)
-				}
-				base.Labels["fsverity_digest"] = verityDigest
-			}
-		}
 	}
 
 	// Ingest has now been made available in the content store, attempt to complete
