@@ -29,7 +29,6 @@ import (
 
 	"github.com/containerd/containerd/v2/core/content"
 	"github.com/containerd/containerd/v2/pkg/filters"
-	"github.com/containerd/containerd/v2/pkg/fsverity"
 	"github.com/containerd/errdefs"
 	"github.com/containerd/log"
 
@@ -129,11 +128,6 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 		return nil, fmt.Errorf("calculating blob path for ReaderAt: %w", err)
 	}
 
-	log.G(ctx).Debugf("Getting reader for blob %v", p)
-	if err = validateIntegrity(s.root, p, desc); err != nil {
-		log.G(ctx).Errorf("error validating integrity value of blob %v: %s", p, err.Error())
-	}
-
 	reader, err := OpenReader(p)
 	if err != nil {
 		return nil, fmt.Errorf("blob %s expected at %s: %w", desc.Digest, p, err)
@@ -158,15 +152,6 @@ func (s *store) Delete(ctx context.Context, dgst digest.Digest) error {
 		}
 
 		return fmt.Errorf("content %v: %w", dgst, errdefs.ErrNotFound)
-	}
-
-	integrityFile := filepath.Join(s.root, "integrity", dgst.Encoded())
-	if err := os.RemoveAll(integrityFile); err != nil {
-		if !os.IsNotExist(err) {
-			return err
-		}
-
-		return fmt.Errorf("integrity file %v: %w", dgst, errdefs.ErrNotFound)
 	}
 
 	return nil
@@ -697,38 +682,5 @@ func writeToCompletion(path string, data []byte, mode os.FileMode) error {
 	if err != nil {
 		return fmt.Errorf("rename tmp file: %w", err)
 	}
-	return nil
-}
-
-func validateIntegrity(rootPath string, p string, desc ocispec.Descriptor) error {
-	// validate the integrity of the blob if integrity validation is supported
-	if supported := fsverity.IsSupported(rootPath); !supported {
-		return fmt.Errorf("integrity validation is not supported")
-	}
-
-	var verityDigest string
-	verityDigest, merr := fsverity.Measure(p)
-	if merr != nil {
-		return fmt.Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
-	}
-
-	var expectedDigest string
-	integrityFile := filepath.Join(rootPath, "integrity", desc.Digest.Encoded())
-	ifd, err := os.Open(integrityFile)
-	if err != nil {
-		return fmt.Errorf("could not read expected integrity value of %s", p)
-	}
-	b, err := io.ReadAll(ifd)
-	if err != nil {
-		return fmt.Errorf("could not read fsverity digest from integrity file: %s", err.Error())
-	} else {
-		expectedDigest = string(b)
-	}
-
-	// compare the digest to the "good" value stored in the blob label
-	if verityDigest != expectedDigest {
-		return fmt.Errorf("blob not trusted: fsverity digest does not match the expected digest value")
-	}
-
 	return nil
 }

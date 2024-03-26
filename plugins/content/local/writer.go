@@ -138,8 +138,14 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 		return err
 	}
 
-	if err = storeIntegrity(w.s.root, target, dgst); err != nil {
-		log.G(ctx).Errorf("failed to store integrity of blob %v: %s", target, err.Error())
+	// Enable content blob integrity verification if supported
+
+	if integritySupported := fsverity.IsSupported(w.s.root); integritySupported {
+		if err := fsverity.Enable(target); err != nil {
+			log.G(ctx).Warnf("failed to enable integrity of blob %v: %s", target, err.Error())
+		}
+	} else {
+		log.G(ctx).Warnf("fsverity integrity verification is not supported")
 	}
 
 	// Ingest has now been made available in the content store, attempt to complete
@@ -211,49 +217,4 @@ func (w *writer) Truncate(size int64) error {
 		return err
 	}
 	return w.fp.Truncate(0)
-}
-
-func storeIntegrity(rootPath string, target string, dgst digest.Digest) error {
-	if supported := fsverity.IsSupported(rootPath); !supported {
-		return fmt.Errorf("integrity validation is not supported")
-	}
-
-	var verityDigest string
-	if err := fsverity.Enable(target); err != nil {
-		return fmt.Errorf("failed to enable fsverity verification: %s", err.Error())
-	}
-
-	verityDigest, merr := fsverity.Measure(target)
-	if merr != nil {
-		return fmt.Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
-	}
-
-	integrityStore := filepath.Join(rootPath, "integrity")
-	if err := os.MkdirAll(integrityStore, 0755); err != nil {
-		return fmt.Errorf("error creating integrity digest directory: %s", err)
-	}
-
-	digestPath := filepath.Join(integrityStore, dgst.Encoded())
-	_, err := os.Stat(digestPath)
-	if err != nil {
-		if os.IsExist(err) {
-			return fmt.Errorf("integrity digest for blob already exists: %s", err)
-		}
-	}
-
-	digestFile, err := os.Create(digestPath)
-	if err != nil {
-		if os.IsExist(err) {
-			return fmt.Errorf("error creating integrity digest file: %s", err)
-		}
-
-		return fmt.Errorf("Error creating integrity digest file for blob: %s", dgst.Encoded())
-	}
-
-	_, err = digestFile.WriteString(verityDigest)
-	if err != nil {
-		return fmt.Errorf("error writing vsverity digest to file: %s", err)
-	}
-
-	return nil
 }
