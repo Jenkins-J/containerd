@@ -140,12 +140,16 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 
 	// Enable content blob integrity verification if supported
 
-	if integritySupported := fsverity.IsSupported(w.s.root); integritySupported {
+	var (
+		integritySupported bool
+		supportErr         error
+	)
+	if integritySupported, supportErr = fsverity.IsSupported(w.s.root); integritySupported {
 		if err := fsverity.Enable(target); err != nil {
 			log.G(ctx).Warnf("failed to enable integrity of blob %v: %s", target, err.Error())
 		}
 	} else {
-		log.G(ctx).Warnf("fsverity integrity verification is not supported")
+		log.G(ctx).Warnf("fsverity integrity verification is not supported: %s", supportErr.Error())
 	}
 
 	// Ingest has now been made available in the content store, attempt to complete

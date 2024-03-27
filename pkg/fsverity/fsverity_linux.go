@@ -1,5 +1,3 @@
-//go:build linux
-
 /*
    Copyright The containerd Authors.
 
@@ -48,22 +46,25 @@ const (
 )
 
 var (
-	once      sync.Once
-	supported bool
+	once         sync.Once
+	supported    bool
+	supportedErr error
 )
 
-func IsSupported(rootPath string) bool {
+func IsSupported(rootPath string) (bool, error) {
 	once.Do(func() {
 		minKernelVersion := kernelversion.KernelVersion{Kernel: 5, Major: 4}
 		s, err := kernelversion.GreaterEqualThan(minKernelVersion)
 		if err != nil {
 			supported = s
+			supportedErr = err
 			return
 		}
 
 		integrityDir := filepath.Join(rootPath, "integrity")
 		if err = os.MkdirAll(integrityDir, 0755); err != nil {
 			supported = false
+			supportedErr = err
 			return
 		}
 
@@ -71,6 +72,7 @@ func IsSupported(rootPath string) bool {
 		digestFile, err := os.Create(digestPath)
 		if err != nil {
 			supported = false
+			supportedErr = err
 			return
 		}
 
@@ -80,25 +82,27 @@ func IsSupported(rootPath string) bool {
 		eerr := Enable(digestPath)
 		if eerr != nil {
 			supported = false
+			supportedErr = eerr
 			return
 		}
 
 		supported = true
+		supportedErr = nil
 	})
-	return supported
+	return supported, supportedErr
 }
 
 func IsEnabled(path string) (bool, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return false, fmt.Errorf("error opening file: %s", err)
+		return false, err
 	}
 
 	var attr int
 
 	_, _, flagErr := unix.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(unix.FS_IOC_GETFLAGS), uintptr(unsafe.Pointer(&attr)))
 	if flagErr != 0 {
-		return false, fmt.Errorf("error getting inode flags: %s", flagErr)
+		return false, fmt.Errorf("error getting inode flags: %w", flagErr)
 	}
 
 	if attr&unix.FS_VERITY_FL == unix.FS_VERITY_FL {
@@ -111,7 +115,7 @@ func IsEnabled(path string) (bool, error) {
 func Enable(path string) error {
 	f, err := os.Open(path)
 	if err != nil {
-		return fmt.Errorf("error opening file: %s", err.Error())
+		return err
 	}
 
 	var args = &fsverityEnableArg{}
@@ -137,7 +141,7 @@ func Enable(path string) error {
 
 	_, _, errno := unix.Syscall(syscall.SYS_IOCTL, f.Fd(), uintptr(unix.FS_IOC_ENABLE_VERITY), uintptr(unsafe.Pointer(args)))
 	if errno != 0 {
-		return fmt.Errorf("enable fsverity failed: %d", errno)
+		return fmt.Errorf("enable fsverity failed: %w", errno)
 	}
 
 	return nil
