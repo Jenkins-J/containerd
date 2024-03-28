@@ -97,6 +97,7 @@ func IsEnabled(path string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	defer f.Close()
 
 	var attr int
 
