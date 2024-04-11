@@ -51,9 +51,14 @@ func TestEnable(t *testing.T) {
 		t.Skipf("invalid device: %s", err.Error())
 	}
 
+	var expected bool
 	enabled, err := ext4IsVerity(device)
 	if !enabled || err != nil {
-		t.Skipf("fsverity not enabled on the file system: %s", err.Error())
+		t.Logf("fsverity not enabled on ext4 file system: %s", err.Error())
+		expected = false
+	} else {
+		t.Logf("fsverity enabled on ext4 file system")
+		expected = true
 	}
 
 	verityFile := filepath.Join(rootDir, "fsverityFile")
@@ -75,8 +80,11 @@ func TestEnable(t *testing.T) {
 	}()
 
 	err = Enable(verityFile)
-	if err != nil {
+	if err != nil && expected {
 		t.Errorf("fsverity Enable failed: %s", err.Error())
+	}
+	if err == nil && !expected {
+		t.Errorf("fsverity Enable succeeded, expected Enable to fail")
 	}
 }
 
