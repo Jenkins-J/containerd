@@ -58,6 +58,7 @@ import (
 	"github.com/containerd/containerd/v2/defaults"
 	"github.com/containerd/containerd/v2/pkg/deprecation"
 	"github.com/containerd/containerd/v2/pkg/dialer"
+	"github.com/containerd/containerd/v2/pkg/integrity"
 	"github.com/containerd/containerd/v2/pkg/sys"
 	"github.com/containerd/containerd/v2/pkg/timeout"
 	"github.com/containerd/containerd/v2/plugins"
@@ -477,10 +478,19 @@ func LoadPlugins(ctx context.Context, config *srvconfig.Config) ([]plugin.Regist
 	registry.Register(&plugin.Registration{
 		Type: plugins.ContentPlugin,
 		ID:   "content",
+		Requires: []plugins.Type{
+			plugins.IntegrityVerifierPlugin,
+		},
 		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
 			root := ic.Properties[plugins.PropertyRootDir]
 			ic.Meta.Exports["root"] = root
-			return local.NewStore(root)
+
+			var iv integrity.Validator
+			iv, err := ic.GetSingle(plugins.IntegrityVerifierPlugin)
+			if err != nil {
+				return nil, err
+			}
+			return local.NewStore(root, iv)
 		},
 	})
 

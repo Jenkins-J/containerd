@@ -29,6 +29,7 @@ import (
 
 	"github.com/containerd/containerd/v2/core/content"
 	"github.com/containerd/containerd/v2/pkg/filters"
+	"github.com/containerd/containerd/v2/pkg/integrity"
 	"github.com/containerd/errdefs"
 	"github.com/containerd/log"
 
@@ -64,11 +65,12 @@ type LabelStore interface {
 type store struct {
 	root string
 	ls   LabelStore
+	iv   integrity.Validator
 }
 
 // NewStore returns a local content store
-func NewStore(root string) (content.Store, error) {
-	return NewLabeledStore(root, nil)
+func NewStore(root string, iv integrity.Validator) (content.Store, error) {
+	return NewLabeledStore(root, nil, iv)
 }
 
 // NewLabeledStore returns a new content store using the provided label store
@@ -76,7 +78,7 @@ func NewStore(root string) (content.Store, error) {
 // Note: content stores which are used underneath a metadata store may not
 // require labels and should use `NewStore`. `NewLabeledStore` is primarily
 // useful for tests or standalone implementations.
-func NewLabeledStore(root string, ls LabelStore) (content.Store, error) {
+func NewLabeledStore(root string, ls LabelStore, iv integrity.Validator) (content.Store, error) {
 	if err := os.MkdirAll(filepath.Join(root, "ingest"), 0777); err != nil {
 		return nil, err
 	}
@@ -84,6 +86,7 @@ func NewLabeledStore(root string, ls LabelStore) (content.Store, error) {
 	return &store{
 		root: root,
 		ls:   ls,
+		iv:   iv,
 	}, nil
 }
 
