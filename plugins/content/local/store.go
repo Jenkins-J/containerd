@@ -33,6 +33,7 @@ import (
 	"github.com/containerd/containerd/v2/core/content"
 	"github.com/containerd/containerd/v2/internal/fsverity"
 	"github.com/containerd/containerd/v2/pkg/filters"
+	"github.com/containerd/containerd/v2/pkg/integrity"
 
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -64,14 +65,14 @@ type LabelStore interface {
 // Store can generally support multi-reader, single-writer ingest of data,
 // including resumable ingest.
 type store struct {
-	root               string
-	ls                 LabelStore
-	integritySupported bool
+	root string
+	ls   LabelStore
+	iv   integrity.Validator
 }
 
 // NewStore returns a local content store
-func NewStore(root string) (content.Store, error) {
-	return NewLabeledStore(root, nil)
+func NewStore(root string, iv integrity.Validator) (content.Store, error) {
+	return NewLabeledStore(root, nil, iv)
 }
 
 // NewLabeledStore returns a new content store using the provided label store
@@ -79,7 +80,7 @@ func NewStore(root string) (content.Store, error) {
 // Note: content stores which are used underneath a metadata store may not
 // require labels and should use `NewStore`. `NewLabeledStore` is primarily
 // useful for tests or standalone implementations.
-func NewLabeledStore(root string, ls LabelStore) (content.Store, error) {
+func NewLabeledStore(root string, ls LabelStore, iv integrity.Validator) (content.Store, error) {
 	if err := os.MkdirAll(filepath.Join(root, "ingest"), 0777); err != nil {
 		return nil, err
 	}
@@ -87,9 +88,9 @@ func NewLabeledStore(root string, ls LabelStore) (content.Store, error) {
 	supported, _ := fsverity.IsSupported(root)
 
 	return &store{
-		root:               root,
-		ls:                 ls,
-		integritySupported: supported,
+		root: root,
+		ls:   ls,
+		iv:   iv,
 	}, nil
 }
 
