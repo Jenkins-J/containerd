@@ -19,7 +19,7 @@ type validator struct {
 }
 
 type Config struct {
-	StorePath string
+	StorePath string `toml:"store_path"`
 	// key pair for signatures?
 }
 

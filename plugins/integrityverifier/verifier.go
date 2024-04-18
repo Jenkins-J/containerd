@@ -7,7 +7,7 @@ import (
 )
 
 // TODO: see if 'root' directory value can be derived from elsewhere
-const defaultIntegrityStore = "/var/lib/containerd/io.containerd.content.v1.content/integrity/"
+const defaultIntegrityPath = "/var/lib/containerd/io.containerd.content.v1.content/integrity/"
 
 func init() {
 	plugin.Register(&plugin.Registration{

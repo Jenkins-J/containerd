@@ -65,11 +65,11 @@ type LabelStore interface {
 type store struct {
 	root string
 	ls   LabelStore
-	iv   integrity.Validator
+	iv   integrity.Verifier
 }
 
 // NewStore returns a local content store
-func NewStore(root string, iv integrity.Validator) (content.Store, error) {
+func NewStore(root string, iv integrity.Verifier) (content.Store, error) {
 	return NewLabeledStore(root, nil, iv)
 }
 
@@ -78,7 +78,7 @@ func NewStore(root string, iv integrity.Validator) (content.Store, error) {
 // Note: content stores which are used underneath a metadata store may not
 // require labels and should use `NewStore`. `NewLabeledStore` is primarily
 // useful for tests or standalone implementations.
-func NewLabeledStore(root string, ls LabelStore, iv integrity.Validator) (content.Store, error) {
+func NewLabeledStore(root string, ls LabelStore, iv integrity.Verifier) (content.Store, error) {
 	if err := os.MkdirAll(filepath.Join(root, "ingest"), 0777); err != nil {
 		return nil, err
 	}
