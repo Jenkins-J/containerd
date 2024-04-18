@@ -495,7 +495,7 @@ func LoadPlugins(ctx context.Context, config *srvconfig.Config) ([]plugin.Regist
 			root := ic.Properties[plugins.PropertyRootDir]
 			ic.Meta.Exports["root"] = root
 
-			var iv integrity.Validator
+			var iv integrity.Verifier
 			iv, err := ic.GetSingle(plugins.IntegrityVerifierPlugin)
 			if err != nil {
 				return nil, err
