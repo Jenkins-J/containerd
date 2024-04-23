@@ -488,7 +488,7 @@ func LoadPlugins(ctx context.Context, config *srvconfig.Config) ([]plugin.Regist
 	registry.Register(&plugin.Registration{
 		Type: plugins.ContentPlugin,
 		ID:   "content",
-		Requires: []plugins.Type{
+		Requires: []plugin.Type{
 			plugins.IntegrityVerifierPlugin,
 		},
 		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
