@@ -23,7 +23,7 @@ type Config struct {
 	// key pair for signatures?
 }
 
-var _ integrity.Validator = validator{}
+var _ integrity.Verifier = validator{}
 
 func NewValidator(config Config) validator {
 	return validator{integrityStorePath: config.StorePath}
