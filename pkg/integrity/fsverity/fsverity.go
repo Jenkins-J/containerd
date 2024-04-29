@@ -85,25 +85,28 @@ func (v validator) IsValid(blob string) (bool, error) {
 	}
 
 	verityDigest, err := measure()
-	if err == nil {
-		var expectedDigest string
-		digest := filepath.Base(blob)
-		integrityFile := filepath.Join(v.integrityStorePath, digest)
-		ifd, err := os.Open(integrityFile) // TODO: validate the signed digest next?
-		if err != nil {
-			return nil, fmt.Errorf("could not read expected integrity value of %s", p)
-		}
-		b, err := io.ReadAll(ifd)
-		if err == nil {
-			expectedDigest = string(b)
-		}
-
-		// compare the digest to the "good" value stored in the blob label
-		if verityDigest != expectedDigest {
-			return nil, fmt.Errorf("blob not trusted: fsverity digest does not match the expected digest value")
-		}
+	if err != nil {
+		return false, fmt.Errorf("failed to measure blob: %w", err)
 	}
-	return nil
+
+	var expectedDigest string
+	digest := filepath.Base(blob)
+	integrityFile := filepath.Join(v.integrityStorePath, digest)
+	ifd, err := os.Open(integrityFile) // TODO: validate the signed digest next?
+	if err != nil {
+		return false, fmt.Errorf("could not read expected integrity value of %s", blob)
+	}
+	b, err := io.ReadAll(ifd)
+	if err == nil {
+		expectedDigest = string(b)
+	}
+
+	// compare the digest to the known "good" value
+	if verityDigest != expectedDigest {
+		return false, fmt.Errorf("blob not trusted: fsverity digest does not match the expected digest value")
+	}
+
+	return true, nil
 }
 
 // Remove the stored digest when no longer needed
