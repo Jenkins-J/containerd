@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/containerd/containerd/v2/errdefs"
 	fsv "github.com/containerd/containerd/v2/pkg/fsverity"
 	"github.com/containerd/containerd/v2/pkg/integrity"
+	"github.com/containerd/errdefs"
 )
 
 // TODO: add integrity plugin as content store plugin dependency
