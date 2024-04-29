@@ -34,11 +34,11 @@ func NewValidator(config Config) validator {
 func (v validator) Register(blob string) (string, error) {
 	var verityDigest string
 	// Enable fsverity digest verification on the blob
-	if err := fsverity.Enable(blob); err != nil {
+	if err := fsv.Enable(blob); err != nil {
 		return verityDigest, fmt.Errorf("failed to enable fsverity verification: %s", err.Error())
 	}
 
-	verityDigest, merr := fsverity.Measure(blob)
+	verityDigest, merr := fsv.Measure(blob)
 	if merr != nil {
 		return verityDigest, fmt.Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
 	}
@@ -69,15 +69,15 @@ func (v validator) IsValid(blob string) (bool, error) {
 		var verityDigest string
 		// check that fsverity is enabled on the blob before reading
 		// if not, it may not be trustworthy
-		enabled, err := fsv.IsEnabled(p)
+		enabled, err := fsv.IsEnabled(blob)
 		if err != nil {
-			return verityDigest, fmt.Errorf("Error checking fsverity status of blob %s: %s", p, err.Error())
+			return verityDigest, fmt.Errorf("Error checking fsverity status of blob %s: %s", blob, err.Error())
 		}
 		if !enabled {
-			return verityDigest, fmt.Errorf("fsverity not enabled on blob %s", p)
+			return verityDigest, fmt.Errorf("fsverity not enabled on blob %s", blob)
 		}
 
-		verityDigest, merr := fsv.Measure(p)
+		verityDigest, merr := fsv.Measure(blob)
 		if merr != nil {
 			return verityDigest, fmt.Errorf("failed to take fsverity measurement of blob: %s", merr.Error())
 		}
