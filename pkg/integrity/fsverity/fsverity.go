@@ -47,6 +47,10 @@ func (v validator) Register(blob string) (string, error) {
 
 	digest := filepath.Base(blob)
 
+	if err := os.MkdirAll(v.integrityStorePath, 0755); err != nil {
+		return verityDigest, fmt.Errorf("Failed to create integrity store: %w", err)
+	}
+
 	integrityFilePath := filepath.Join(v.integrityStorePath, digest)
 	integrityFile, err := os.Create(integrityFilePath)
 	if err != nil {
