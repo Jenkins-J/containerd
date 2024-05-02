@@ -142,7 +142,7 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 
 	// Enable content blob integrity verification if supported
 
-	_, err := w.s.iv.Register(target)
+	_, err = w.s.iv.Register(target)
 	if err != nil {
 		return fmt.Errorf("failed to enable integrity verification on blob: %v: %w", target, err)
 	}
