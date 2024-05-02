@@ -16,8 +16,8 @@ func init() {
 		ID:     "fsverity",
 		Config: &fsverity.Config{StorePath: defaultIntegrityPath},
 		InitFn: func(ic *plugin.InitContext) (interface{}, error) {
-			cfg := ic.Config.(fsverity.Config)
-			return fsverity.NewValidator(cfg), nil
+			cfg := ic.Config.(*fsverity.Config)
+			return fsverity.NewValidator(*cfg), nil
 		},
 	})
 }
