@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
 	"syscall"
 	"unsafe"
 
@@ -45,51 +44,33 @@ const (
 	maxDigestSize    uint16 = 64
 )
 
-var (
-	once         sync.Once
-	supported    bool
-	supportedErr error
-)
-
 func IsSupported(rootPath string) (bool, error) {
-	once.Do(func() {
-		minKernelVersion := kernelversion.KernelVersion{Kernel: 5, Major: 4}
-		s, err := kernelversion.GreaterEqualThan(minKernelVersion)
-		if err != nil {
-			supported = s
-			supportedErr = err
-			return
-		}
+	minKernelVersion := kernelversion.KernelVersion{Kernel: 5, Major: 4}
+	s, err := kernelversion.GreaterEqualThan(minKernelVersion)
+	if err != nil {
+		return s, err
+	}
 
-		integrityDir := filepath.Join(rootPath, "integrity")
-		if err = os.MkdirAll(integrityDir, 0755); err != nil {
-			supported = false
-			supportedErr = err
-			return
-		}
+	integrityDir := filepath.Join(rootPath, "integrity")
+	if err = os.MkdirAll(integrityDir, 0755); err != nil {
+		return false, err
+	}
 
-		digestPath := filepath.Join(integrityDir, "supported")
-		digestFile, err := os.Create(digestPath)
-		if err != nil {
-			supported = false
-			supportedErr = err
-			return
-		}
+	digestPath := filepath.Join(integrityDir, "supported")
+	digestFile, err := os.Create(digestPath)
+	if err != nil {
+		return false, err
+	}
 
-		digestFile.Close()
-		defer os.RemoveAll(integrityDir)
+	digestFile.Close()
+	defer os.RemoveAll(integrityDir)
 
-		eerr := Enable(digestPath)
-		if eerr != nil {
-			supported = false
-			supportedErr = eerr
-			return
-		}
+	eerr := Enable(digestPath)
+	if eerr != nil {
+		return false, eerr
+	}
 
-		supported = true
-		supportedErr = nil
-	})
-	return supported, supportedErr
+	return true, nil
 }
 
 func IsEnabled(path string) (bool, error) {
