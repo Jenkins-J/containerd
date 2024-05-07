@@ -24,7 +24,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"sync"
 	"time"
 
 	"github.com/containerd/containerd/v2/core/content"
@@ -36,17 +35,15 @@ import (
 
 // writer represents a write transaction against the blob store.
 type writer struct {
-	s                  *store
-	fp                 *os.File // opened data file
-	path               string   // path to writer dir
-	ref                string   // ref key
-	offset             int64
-	total              int64
-	digester           digest.Digester
-	startedAt          time.Time
-	updatedAt          time.Time
-	once               sync.Once
-	integritySupported bool
+	s         *store
+	fp        *os.File // opened data file
+	path      string   // path to writer dir
+	ref       string   // ref key
+	offset    int64
+	total     int64
+	digester  digest.Digester
+	startedAt time.Time
+	updatedAt time.Time
 }
 
 func (w *writer) Status() (content.Status, error) {
@@ -143,16 +140,7 @@ func (w *writer) Commit(ctx context.Context, size int64, expected digest.Digest,
 
 	// Enable content blob integrity verification if supported
 
-	w.once.Do(func() {
-		integritySupported, supportErr := fsverity.IsSupported(w.s.root)
-		if supportErr != nil {
-			log.G(ctx).WithError(supportErr).Debug("fsverity integrity verification is not supported")
-		}
-
-		w.integritySupported = integritySupported
-	})
-
-	if w.integritySupported {
+	if w.s.integritySupported {
 		if err := fsverity.Enable(target); err != nil {
 			log.G(ctx).Warnf("failed to enable integrity for blob %v: %s", target, err.Error())
 		}
