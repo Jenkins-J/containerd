@@ -51,10 +51,11 @@ func IsSupported(rootPath string) (bool, error) {
 		return s, err
 	}
 
-	integrityDir := filepath.Join(rootPath, "integrity")
-	if err = os.MkdirAll(integrityDir, 0755); err != nil {
+	integrityDir, err := os.MkdirTemp(rootPath, ".fsverity-check-*")
+	if err != nil {
 		return false, err
 	}
+	defer os.RemoveAll(integrityDir)
 
 	digestPath := filepath.Join(integrityDir, "supported")
 	digestFile, err := os.Create(digestPath)
@@ -63,7 +64,6 @@ func IsSupported(rootPath string) (bool, error) {
 	}
 
 	digestFile.Close()
-	defer os.RemoveAll(integrityDir)
 
 	eerr := Enable(digestPath)
 	if eerr != nil {
