@@ -25,6 +25,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"time"
 
 	"github.com/containerd/containerd/v2/cmd/containerd/server"
@@ -287,6 +288,53 @@ can be used and modified as necessary as a custom configuration.`
 		go func() {
 			server.Wait()
 			close(readyC)
+		}()
+
+		// start watchdog and service healthcheck
+		go func() {
+			// execute health check
+			healthy := true
+
+			// get watchdog interval
+			watchdogUsec := os.Getenv("WATCHDOG_USEC")
+			wusec, err := strconv.Atoi(watchdogUsec)
+			if err != nil {
+				log.G(ctx).WithError(err).Warn("Can not parse WATCHDOG_USEC")
+			}
+
+			interval := wusec / 2
+			duration := fmt.Sprintf("%dus", interval)
+			intervalDuration, err := time.ParseDuration(duration)
+			if err != nil {
+				log.G(ctx).WithError(err).Warn("Failed to parse interval duration")
+			}
+
+			// connect to watchdog notify socket and execute ready ping
+			notifySocket := os.Getenv("NOTIFY_SOCKET")
+			uconn, err := net.Dial("unixgram", notifySocket)
+			if err != nil {
+				log.G(ctx).WithError(err).Warn("Failed to connect to watchdog notify socket")
+			}
+			defer uconn.Close()
+
+			_, err = uconn.Write([]byte("READY=1"))
+			if err != nil {
+				log.G(ctx).WithError(err).Warn("Failed to send ready signal over notify socket")
+			}
+
+			for healthy {
+				// send watchdog ping
+				_, err = uconn.Write([]byte("WATCHDOG=1"))
+				if err != nil {
+					log.G(ctx).WithError(err).Warn("Failed to send watchdog ping over notify socket")
+				}
+
+				// sleep
+				time.Sleep(intervalDuration)
+
+				// recheck health
+				healthy = true
+			}
 		}()
 
 		select {
