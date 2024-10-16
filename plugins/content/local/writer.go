@@ -26,13 +26,10 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/containerd/containerd/v2/core/content"
 	"github.com/containerd/errdefs"
 	"github.com/containerd/log"
 	"github.com/opencontainers/go-digest"
-
-	"github.com/containerd/containerd/v2/core/content"
-	"github.com/containerd/containerd/v2/internal/fsverity"
-	"github.com/containerd/containerd/v2/pkg/fsverity"
 )
 
 // writer represents a write transaction against the blob store.

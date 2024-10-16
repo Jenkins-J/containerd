@@ -27,13 +27,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/errdefs"
-	"github.com/containerd/log"
-
 	"github.com/containerd/containerd/v2/core/content"
-	"github.com/containerd/containerd/v2/internal/fsverity"
 	"github.com/containerd/containerd/v2/pkg/filters"
 	"github.com/containerd/containerd/v2/pkg/integrity"
+	"github.com/containerd/errdefs"
+	"github.com/containerd/log"
 
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -84,8 +82,6 @@ func NewLabeledStore(root string, ls LabelStore, iv integrity.Verifier) (content
 	if err := os.MkdirAll(filepath.Join(root, "ingest"), 0777); err != nil {
 		return nil, err
 	}
-
-	supported, _ := fsverity.IsSupported(root)
 
 	return &store{
 		root: root,
