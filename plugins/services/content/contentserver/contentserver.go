@@ -372,6 +372,7 @@ func (s *service) Write(session api.Content_WriteServer) (err error) {
 			total = req.Total
 		}
 
+		// TODO: write content integrity value to msg as well
 		switch req.Action {
 		case api.WriteAction_STAT:
 			msg.Digest = wr.Digest().String()
