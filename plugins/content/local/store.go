@@ -127,12 +127,15 @@ func (s *store) info(dgst digest.Digest, fi os.FileInfo, labels map[string]strin
 // ReaderAt returns an io.ReaderAt for the blob.
 func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.ReaderAt, error) {
 	p, err := s.blobPath(desc.Digest)
+	fmt.Printf("***** READERAT BLOB: %s *****\n", p)
 	if err != nil {
 		return nil, fmt.Errorf("calculating blob path for ReaderAt: %w", err)
 	}
 
 	// check blob integrity before openning for reading
+	fmt.Printf("***** VALIDATING CONTENT BLOB *****\n")
 	valid, err := s.iv.IsValid(p)
+	fmt.Printf("***** BLOB IS VALID: %t *****\n", valid)
 	if err != nil || !valid {
 		return nil, fmt.Errorf("blob integrity verification failed: %w", err)
 	}
