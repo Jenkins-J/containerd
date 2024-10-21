@@ -109,7 +109,7 @@ func (v validator) IsValid(blob string) (bool, error) {
 
 	// compare the digest to the known "good" value
 	if verityDigest != expectedDigest {
-		return false, fmt.Errorf("blob not trusted: fsverity digest does not match the expected digest value")
+		return false, fmt.Errorf("blob not trusted: fsverity digest does not match the expected digest value, expected: %s; got: %s", expectedDigest, verityDigest)
 	}
 
 	return true, nil
