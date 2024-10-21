@@ -97,6 +97,8 @@ func (v validator) IsValid(blob string) (bool, error) {
 	digest := filepath.Base(blob)
 	integrityFile := filepath.Join(v.integrityStorePath, digest)
 	ifd, err := os.Open(integrityFile) // TODO: validate the signed digest next?
+	defer ifd.Close()
+
 	if err != nil {
 		return false, fmt.Errorf("could not read expected integrity value of %s", blob)
 	}
