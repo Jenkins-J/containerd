@@ -28,7 +28,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/v2/core/content"
-  "github.com/containerd/containerd/v2/internal/fsverity"
+	"github.com/containerd/containerd/v2/internal/fsverity"
 	"github.com/containerd/containerd/v2/pkg/filters"
 	"github.com/containerd/containerd/v2/pkg/integrity"
 	"github.com/containerd/errdefs"
@@ -67,7 +67,7 @@ type store struct {
 	root               string
 	ls                 LabelStore
 	integritySupported bool
-	iv   integrity.Verifier
+	iv                 integrity.Verifier
 
 	locksMu              sync.Mutex
 	locks                map[string]*lock
@@ -140,9 +140,11 @@ func (s *store) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.
 	}
 
 	// check blob integrity before openning for reading
-	valid, err := s.iv.IsValid(p)
-	if err != nil || !valid {
-		return nil, fmt.Errorf("blob integrity verification failed: %w", err)
+	if s.integritySupported {
+		valid, err := s.iv.IsValid(p)
+		if err != nil || !valid {
+			return nil, fmt.Errorf("blob integrity verification failed: %w", err)
+		}
 	}
 
 	reader, err := OpenReader(p)
@@ -171,8 +173,10 @@ func (s *store) Delete(ctx context.Context, dgst digest.Digest) error {
 		return fmt.Errorf("content %v: %w", dgst, errdefs.ErrNotFound)
 	}
 
-	if err := s.iv.Unregister(bp); err != nil {
-		return fmt.Errorf("failed to unregister blob integrity verification: %w", err)
+	if s.integritySupported {
+		if err := s.iv.Unregister(bp); err != nil {
+			return fmt.Errorf("failed to unregister blob integrity verification: %w", err)
+		}
 	}
 
 	return nil
